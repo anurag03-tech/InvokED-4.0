@@ -35,9 +35,7 @@
 
    1. Open Command Prompt (CMD):
 
-   2. Press Windows + R
-      Type cmd and press Enter
-      Type ipconfig and press Enter.
+   2. Type ipconfig and press Enter.
 
    3. Look for the section that says "IPv4 Address":
       If you're on Wi-Fi, check under "Wireless LAN adapter Wi-Fi"
