@@ -45,7 +45,7 @@
    npm run dev
    ```
 
-5. Install Expo Go on your mobile device and scan the QR code to run the application, make sure both PC and mobile connected to same WiFi.
+5. Install Expo Go App on your mobile and scan the QR code to run the application, make sure both PC and mobile connected to same WiFi.
 
 ---
 
