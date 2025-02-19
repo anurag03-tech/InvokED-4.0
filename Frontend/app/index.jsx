@@ -1,14 +1,33 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { View, Text, ScrollView, Image } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth } from "./context/authContext";
 import { Button } from "~/components/ui/button";
 import i18n from "../utils/language/i18n";
+import { useVoice } from "./voiceAssistant/VoiceContext";
 
 const LanguageSelection = () => {
   const router = useRouter();
   const { user, loading, role } = useAuth();
   const [selectedLanguage, setSelectedLanguage] = useState(null);
+  const { speakText, stopAudio } = useVoice();
+  const hasSpokenRef = useRef(false);
+
+  useEffect(() => {
+    return () => {
+      stopAudio();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!hasSpokenRef.current && !loading) {
+      speakText(
+        "Please select your preferred language from the options below. After selecting your language, click the Next button to continue.",
+        "en-IN"
+      );
+      hasSpokenRef.current = true;
+    }
+  }, [loading]);
 
   useEffect(() => {
     // If not loading and user is authenticated, redirect to home

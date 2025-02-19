@@ -1,4 +1,3 @@
-// ChatBot.js
 import React, { useState, useRef } from "react";
 import {
   View,
@@ -105,16 +104,16 @@ const ChatBot = () => {
         onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
       />
 
-      <View className="flex-row p-4 bg-white border-t border-gray-200">
+      <View className="flex-row p-3 bg-gray-100 border-t border-b border-gray-200 ">
         <TextInput
-          className="flex-1 mr-2 p-3 bg-gray-100 rounded-full text-base"
+          className="flex-1 mr-2 p-3 bg-white border border-gray-400 rounded-lg text-base"
           value={inputText}
           onChangeText={setInputText}
           placeholder="Type your message..."
           multiline
         />
         <TouchableOpacity
-          className={`justify-center items-center px-4 rounded-full ${
+          className={`justify-center items-center px-4 rounded-2xl h-12 ${
             isLoading ? "bg-gray-400" : "bg-blue-500"
           }`}
           onPress={handleSend}
