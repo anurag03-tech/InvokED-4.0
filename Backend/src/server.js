@@ -7,8 +7,8 @@ const classroomRoutes = require("./routes/classroomRoutes");
 const studentRoutes = require("./routes/studentRoutes");
 const parentRoutes = require("./routes/parentRoutes");
 require("./models/student");
-//const fileUpload = require("express-fileupload");
-//const path = require("path");
+const fileUpload = require("express-fileupload");
+const path = require("path");
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -26,6 +26,17 @@ const corsOptions = {
 
 // Middlewares
 app.use(cors(corsOptions));
+
+// File upload middleware
+app.use(
+  fileUpload({
+    createParentPath: true,
+    limits: {
+      fileSize: 20 * 1024 * 1024, // 20MB
+    },
+  })
+);
+
 app.use(express.json());
 
 // Basic route
@@ -38,18 +49,6 @@ app.use("/api/teacher", teacherRoutes);
 app.use("/api/classroom", classroomRoutes);
 app.use("/api/student", studentRoutes);
 app.use("/api/parent", parentRoutes);
-
-// app.use(
-//   fileUpload({
-//     createParentPath: true,
-//     limits: {
-//       fileSize: 10 * 1024 * 1024, // 10MB max file size
-//     },
-//   })
-// );
-
-// Serve uploaded files
-// app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 connectDB()
   .then(() => {

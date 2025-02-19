@@ -28,7 +28,19 @@ const ClassroomLayout = () => {
         name="classroomIndex"
         options={{
           header: ({ navigation }) => (
-            <Header navigation={navigation} iconName="inventory" />
+            <Header navigation={navigation} iconName="class" />
+          ),
+          headerStyle: {
+            height: 60,
+          },
+          headerTintColor: "white",
+        }}
+      />
+      <Stack.Screen
+        name="remarks"
+        options={{
+          header: ({ navigation }) => (
+            <Header navigation={navigation} iconName="class" />
           ),
           headerStyle: {
             height: 60,

@@ -9,7 +9,7 @@ const { isTeacherAuthenticated } = require("../middlewares/teacherAuth");
 
 const router = express.Router();
 
-// General student routes
+// student routes
 router.get("/school", isTeacherAuthenticated, getSchoolStudents);
 router.get("/:id", isTeacherAuthenticated, getStudent);
 router.put("/:id", isTeacherAuthenticated, updateStudent);

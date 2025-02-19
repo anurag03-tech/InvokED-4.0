@@ -9,6 +9,10 @@ const {
   getAllMarks,
 } = require("../controllers/parentController");
 const { isParentAuthenticated } = require("../middlewares/parentAuth");
+const {
+  getParentChildRemarks,
+  addParentReply,
+} = require("../controllers/remarkController");
 
 const router = express.Router();
 
@@ -24,5 +28,18 @@ router.put("/profile", isParentAuthenticated, updateProfile);
 router.get("/classroom/:id", isParentAuthenticated, getClassroomDetails);
 router.get("/assignments", isParentAuthenticated, getAllAssignments);
 router.get("/marks", isParentAuthenticated, getAllMarks);
+
+// Remarks routes
+router.get(
+  "/classroom/:classroomId/remarks",
+  isParentAuthenticated,
+  getParentChildRemarks
+);
+
+router.post(
+  "/classroom/:classroomId/reply",
+  isParentAuthenticated,
+  addParentReply
+);
 
 module.exports = router;

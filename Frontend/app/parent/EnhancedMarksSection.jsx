@@ -138,7 +138,7 @@ const renderMarksSection = (classroom) => {
           key={mark._id || index}
           className="p-3 mb-3 bg-blue-50 rounded-lg shadow-sm"
         >
-          <Text className="font-bold text-gray-800 mb-2 text-lg">
+          <Text className="font-bold text-gray-800 mb-2">
             Exam : {mark.exam || "Test"}
           </Text>
 
@@ -176,13 +176,24 @@ const renderMarksSection = (classroom) => {
   );
 };
 
-// Custom Score Gauge component - more compact
+// Custom Score Gauge component
 const ScoreGauge = ({ score, total, size }) => {
   // Calculate percentage with safety check
   const percentage = total > 0 ? (score / total) * 100 : 0;
+
   const radius = size / 2;
-  const circumference = radius * Math.PI * 2;
-  // Ensure visual accuracy - calculate exact offset
+
+  // Ensure stroke width is proportional to gauge size
+  const bgStrokeWidth = Math.max(4, size * 0.06);
+  const fgStrokeWidth = Math.max(6, size * 0.08);
+
+  // Calculate inner radius accounting for stroke width
+  const innerRadius = radius - fgStrokeWidth / 2;
+
+  // Calculate circumference based on inner radius
+  const circumference = innerRadius * Math.PI * 2;
+
+  // Calculate stroke dash offset (key fix: ensure the math is correct)
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
   // Determine color based on score percentage
@@ -194,11 +205,6 @@ const ScoreGauge = ({ score, total, size }) => {
   };
 
   const color = getColor(percentage);
-
-  // Ensure stroke width is proportional to gauge size
-  const bgStrokeWidth = Math.max(4, size * 0.06);
-  const fgStrokeWidth = Math.max(6, size * 0.08);
-  const innerRadius = radius - fgStrokeWidth / 2 - 2;
 
   return (
     <View className="items-center">
@@ -212,7 +218,7 @@ const ScoreGauge = ({ score, total, size }) => {
           strokeWidth={bgStrokeWidth}
           fill="transparent"
         />
-        {/* Progress circle - carefully calculated */}
+        {/* Progress circle */}
         <Circle
           cx={radius}
           cy={radius}
@@ -223,8 +229,11 @@ const ScoreGauge = ({ score, total, size }) => {
           strokeDashoffset={strokeDashoffset}
           strokeLinecap="round"
           fill="transparent"
+          // Fix: Properly specify rotation origin and angle
           rotation="-90"
           origin={`${radius}, ${radius}`}
+          // Key fix: Add this to ensure the circle is rendered correctly
+          strokeOpacity={1}
         />
         {/* Score text */}
         <SvgText
@@ -232,22 +241,22 @@ const ScoreGauge = ({ score, total, size }) => {
           y={radius - 3}
           textAnchor="middle"
           fill="#1F2937"
-          fontSize="17"
+          fontSize={size * 0.19}
           fontWeight="bold"
         >
           {score}
         </SvgText>
         <SvgText
           x={radius}
-          y={radius + 15}
+          y={radius + size * 0.17}
           textAnchor="middle"
           fill="#6B7280"
-          fontSize="14"
+          fontSize={size * 0.15}
         >
           / {total}
         </SvgText>
       </Svg>
-      <Text className="text-sm font-bold" style={{ color }}>
+      <Text className="text-sm font-bold mt-1" style={{ color }}>
         {percentage.toFixed(1)}%
       </Text>
     </View>
