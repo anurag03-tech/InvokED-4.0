@@ -99,11 +99,6 @@ const Remark = () => {
 
         if (response.data.success) {
           if (response.data.remark) {
-            console.log(
-              `Found ${
-                response.data.remark.messages?.length || 0
-              } remarks for student ${studentId}`
-            );
             // Sort messages by date in ascending order (oldest first)
             const sortedMessages = [
               ...(response.data.remark.messages || []),
@@ -219,10 +214,6 @@ const Remark = () => {
       const base64Audio = await FileSystem.readAsStringAsync(uri, {
         encoding: FileSystem.EncodingType.Base64,
       });
-
-      console.log(
-        `Audio converted to base64, size: ${base64Audio.length} bytes`
-      );
 
       // Get file extension from URI
       const extension = uri.split(".").pop();

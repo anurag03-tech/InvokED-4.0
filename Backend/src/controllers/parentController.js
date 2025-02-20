@@ -427,3 +427,81 @@ exports.getAllMarks = async (req, res) => {
     });
   }
 };
+
+//------------------------------------------------------
+
+// Get timetable for a specific classroom
+exports.getClassroomTimetable = async (req, res) => {
+  try {
+    const classroomId = req.params.id;
+    const parentId = req.user.id;
+
+    if (!mongoose.Types.ObjectId.isValid(classroomId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid classroom ID format",
+      });
+    }
+
+    const parent = await Parent.findById(parentId).populate({
+      path: "students",
+      select: "name admissionNumber classrooms",
+    });
+
+    if (!parent) {
+      return res.status(404).json({
+        success: false,
+        message: "Parent not found",
+      });
+    }
+
+    // Check if any of the parent's children are in this classroom
+    const hasChildInClassroom = parent.students.some((student) =>
+      student.classrooms.map((c) => c.toString()).includes(classroomId)
+    );
+
+    if (!hasChildInClassroom) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to view this classroom's timetable",
+      });
+    }
+
+    const classroom = await Classroom.findById(classroomId)
+      .select("grade section subject timetable")
+      .populate("teacher", "name");
+
+    if (!classroom) {
+      return res.status(404).json({
+        success: false,
+        message: "Classroom not found",
+      });
+    }
+
+    if (!classroom.timetable || !classroom.timetable.image) {
+      return res.status(404).json({
+        success: false,
+        message: "No timetable found for this classroom",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      timetable: {
+        image: classroom.timetable.image,
+        lastUpdated: classroom.timetable.lastUpdated,
+        classInfo: {
+          grade: classroom.grade,
+          section: classroom.section,
+          subject: classroom.subject,
+          teacher: classroom.teacher.name,
+        },
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};

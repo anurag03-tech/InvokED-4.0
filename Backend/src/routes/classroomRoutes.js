@@ -17,6 +17,8 @@ const {
   getAttendance,
   getAttendanceReport,
   markBulkAttendance,
+  uploadTimetable,
+  getTimetable,
 } = require("../controllers/classroomController");
 const {
   addStudent,
@@ -88,5 +90,10 @@ router.get(
   isTeacherAuthenticated,
   getStudentRemark
 );
+
+// Timetable routes
+router.post("/:id/timetable", isTeacherAuthenticated, uploadTimetable);
+router.get("/:id/timetable", isTeacherAuthenticated, getTimetable);
+router.get("/:id/student-timetable");
 
 module.exports = router;

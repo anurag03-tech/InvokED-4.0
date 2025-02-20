@@ -766,3 +766,144 @@ exports.markBulkAttendance = async (req, res) => {
     });
   }
 };
+
+//-----------------
+exports.uploadTimetable = async (req, res) => {
+  try {
+    const { image } = req.body;
+    const classId = req.params.id; // Get ID from route params
+
+    if (!image) {
+      return res.status(400).json({
+        success: false,
+        message: "No image provided",
+      });
+    }
+
+    // Find the classroom
+    const classroom = await Classroom.findById(classId);
+
+    if (!classroom) {
+      return res.status(404).json({
+        success: false,
+        message: "Classroom not found",
+      });
+    }
+
+    // Check if the classroom belongs to the logged-in teacher
+    if (classroom.teacher.toString() !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to update timetable for this classroom",
+      });
+    }
+
+    // Strip the data:image/jpeg;base64, prefix if present
+    const base64Image = image.includes("base64,")
+      ? image.split("base64,")[1]
+      : image;
+
+    // Update the timetable
+    classroom.timetable = {
+      image: base64Image,
+      lastUpdated: Date.now(),
+    };
+
+    await classroom.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Timetable uploaded successfully",
+      image: base64Image,
+      lastUpdated: classroom.timetable.lastUpdated,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// Get timetable image
+exports.getTimetable = async (req, res) => {
+  try {
+    const classId = req.params.id;
+
+    console.log("Received Classroom ID:", classId);
+    console.log("Logged in User ID:", req.user.id);
+
+    const classroom = await Classroom.findById(classId);
+
+    if (!classroom) {
+      return res.status(404).json({
+        success: false,
+        message: "Classroom not found",
+      });
+    }
+
+    // Check if the classroom belongs to the logged-in teacher
+    if (classroom.teacher.toString() !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to view timetable for this classroom",
+      });
+    }
+
+    if (!classroom.timetable || !classroom.timetable.image) {
+      return res.status(404).json({
+        success: false,
+        message: "No timetable found for this classroom",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      image: classroom.timetable.image,
+      lastUpdated: classroom.timetable.lastUpdated,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// Delete timetable
+exports.deleteTimetable = async (req, res) => {
+  try {
+    const { classId } = req.params;
+
+    const classroom = await Classroom.findById(classId);
+
+    if (!classroom) {
+      return res.status(404).json({
+        success: false,
+        message: "Classroom not found",
+      });
+    }
+
+    // Check if the classroom belongs to the logged-in teacher
+    if (classroom.teacher.toString() !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to delete timetable for this classroom",
+      });
+    }
+
+    // Remove the timetable
+    classroom.timetable = undefined;
+    await classroom.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Timetable deleted successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};

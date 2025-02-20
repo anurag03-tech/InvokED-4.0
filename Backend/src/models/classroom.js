@@ -126,6 +126,11 @@ const classroomSchema = new mongoose.Schema({
       },
     },
   ],
+  timetable: {
+    image: {
+      type: String, // For storing base64 encoded image
+    },
+  },
   createdAt: {
     type: Date,
     default: Date.now,

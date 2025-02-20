@@ -7,6 +7,7 @@ const {
   getClassroomDetails,
   getAllAssignments,
   getAllMarks,
+  getClassroomTimetable,
 } = require("../controllers/parentController");
 const { isParentAuthenticated } = require("../middlewares/parentAuth");
 const {
@@ -40,6 +41,13 @@ router.post(
   "/classroom/:classroomId/reply",
   isParentAuthenticated,
   addParentReply
+);
+
+// // Timetable routes
+router.get(
+  "/classroom/:id/timetable",
+  isParentAuthenticated,
+  getClassroomTimetable
 );
 
 module.exports = router;
