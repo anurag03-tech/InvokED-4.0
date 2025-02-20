@@ -142,43 +142,6 @@ exports.getClassroomDetails = async (req, res) => {
   }
 };
 
-// Update classroom
-exports.updateClassroom = async (req, res) => {
-  try {
-    let classroom = await Classroom.findById(req.params.id);
-
-    if (!classroom) {
-      return res.status(404).json({
-        success: false,
-        message: "Classroom not found",
-      });
-    }
-
-    // Check if the classroom belongs to the logged-in teacher
-    if (classroom.teacher.toString() !== req.user.id) {
-      return res.status(403).json({
-        success: false,
-        message: "Not authorized to update this classroom",
-      });
-    }
-
-    classroom = await Classroom.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
-
-    res.status(200).json({
-      success: true,
-      classroom,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
-
 // Delete classroom
 exports.deleteClassroom = async (req, res) => {
   try {
@@ -222,7 +185,14 @@ exports.addAssignment = async (req, res) => {
   try {
     const { title, description, dueDate } = req.body;
 
-    const classroom = await Classroom.findById(req.params.id);
+    // Populate students to check for parents
+    const classroom = await Classroom.findById(req.params.id).populate({
+      path: "students",
+      populate: {
+        path: "parents.parent",
+        select: "pushToken",
+      },
+    });
 
     if (!classroom) {
       return res.status(404).json({
@@ -247,11 +217,40 @@ exports.addAssignment = async (req, res) => {
 
     await classroom.save();
 
+    // Check if there are any students with parents
+    const parentIds = [];
+
+    if (classroom.students && classroom.students.length > 0) {
+      classroom.students.forEach((student) => {
+        if (student.parents && student.parents.length > 0) {
+          student.parents.forEach((parentInfo) => {
+            if (parentInfo.parent && parentInfo.parent._id) {
+              parentIds.push(parentInfo.parent._id.toString());
+            }
+          });
+        }
+      });
+    }
+
+    // Only send notification if there are recipients
+    if (parentIds.length > 0) {
+      console.log(`Sending notification to ${parentIds.length} parents`);
+      await notificationService.sendClassroomNotification(
+        classroom,
+        `Assignment: ${title}`,
+        `Due Date: ${new Date(dueDate).toLocaleDateString()}\n${description}`,
+        "assignment"
+      );
+    } else {
+      console.log("No parent recipients found for this classroom");
+    }
+
     res.status(200).json({
       success: true,
       classroom,
     });
   } catch (error) {
+    console.error("Error adding assignment:", error);
     res.status(500).json({
       success: false,
       message: error.message,
@@ -386,7 +385,7 @@ exports.addAnnouncement = async (req, res) => {
       console.log(`Sending notification to ${parentIds.length} parents`);
       await notificationService.sendClassroomNotification(
         classroom,
-        `New Announcement: ${title}`,
+        `Announcement: ${title}`,
         content,
         "announcement"
       );

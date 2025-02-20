@@ -1,7 +1,3 @@
-// BACKEND IMPLEMENTATION
-
-// 1. First, create a notification model
-// models/notification.js
 const mongoose = require("mongoose");
 
 const notificationSchema = new mongoose.Schema({
@@ -15,7 +11,7 @@ const notificationSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ["announcement", "assignment", "attendance", "remark"],
+    enum: ["announcement", "assignment", "attendance", "remark", "marks"],
     required: true,
   },
   classroom: {

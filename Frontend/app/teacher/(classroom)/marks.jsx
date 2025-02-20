@@ -217,7 +217,7 @@ const Marks = () => {
           createdExams.map((exam, index) => (
             <TouchableOpacity
               key={index}
-              className="bg-white p-4 rounded-lg mb-3"
+              className="bg-white p-4 rounded-lg mb-3 border border-gray-300"
               onPress={() => handleExamClick(exam)}
             >
               <Text className="font-semibold">{exam.name}</Text>

@@ -1,9 +1,101 @@
-// remarkController.js
 const Remark = require("../models/remark");
 const Classroom = require("../models/classroom");
 const Student = require("../models/student");
 const Parent = require("../models/parent");
 const mongoose = require("mongoose");
+const notificationService = require("../services/notificationService");
+
+// exports.addMessage = async (req, res) => {
+//   try {
+//     const studentId = req.params.studentId;
+//     const classroomId = req.params.id;
+//     const { type } = req.body;
+
+//     // Verify student and classroom existence
+//     const student = await Student.findById(studentId);
+//     if (!student) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Student not found",
+//       });
+//     }
+
+//     const classroom = await Classroom.findById(classroomId);
+//     if (!classroom) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Classroom not found",
+//       });
+//     }
+
+//     let content;
+//     if (type === "voice") {
+//       if (!req.files || !req.files.file) {
+//         return res.status(400).json({
+//           success: false,
+//           message: "Voice file is required",
+//         });
+//       }
+
+//       const voiceFile = req.files.file;
+
+//       const base64Audio = voiceFile.data.toString("base64");
+
+//       // Store the base64 string directly in the database and Prefix with data URI for easier playback
+//       content = `data:${voiceFile.mimetype};base64,${base64Audio}`;
+
+//       //console.log(`Voice converted to base64, size: ${content.length} bytes`);
+//     } else {
+//       // Handle text message
+//       if (!req.body.content) {
+//         return res.status(400).json({
+//           success: false,
+//           message: "Content is required for text messages",
+//         });
+//       }
+//       content = req.body.content;
+//     }
+
+//     // Find the specific remark for THIS student
+//     let remark = await Remark.findOne({
+//       student: studentId,
+//       classroom: classroomId,
+//     });
+
+//     if (!remark) {
+//       //console.log(`Creating new remark document for student: ${studentId}`);
+//       remark = new Remark({
+//         student: studentId,
+//         classroom: classroomId,
+//         messages: [],
+//       });
+//     } else {
+//       //console.log(`Found existing remark document: ${remark._id}`);
+//     }
+
+//     // Add the message
+//     remark.messages.push({
+//       type,
+//       content,
+//       sender: "teacher",
+//     });
+
+//     await remark.save();
+
+//     res.status(200).json({
+//       success: true,
+//       remark,
+//     });
+//   } catch (error) {
+//     console.error("Server error:", error);
+//     res.status(500).json({
+//       success: false,
+//       message: error.message,
+//     });
+//   }
+// };
+
+// Get remark thread for a student
 
 exports.addMessage = async (req, res) => {
   try {
@@ -11,8 +103,12 @@ exports.addMessage = async (req, res) => {
     const classroomId = req.params.id;
     const { type } = req.body;
 
-    // Verify student and classroom existence
-    const student = await Student.findById(studentId);
+    // Verify student and classroom existence and populate only this student's parents
+    const student = await Student.findById(studentId).populate({
+      path: "parents.parent",
+      select: "pushToken",
+    });
+
     if (!student) {
       return res.status(404).json({
         success: false,
@@ -20,7 +116,15 @@ exports.addMessage = async (req, res) => {
       });
     }
 
-    const classroom = await Classroom.findById(classroomId);
+    const classroom = await Classroom.findById(classroomId).populate({
+      path: "students",
+      match: { _id: studentId },
+      populate: {
+        path: "parents.parent",
+        select: "pushToken",
+      },
+    });
+
     if (!classroom) {
       return res.status(404).json({
         success: false,
@@ -38,15 +142,9 @@ exports.addMessage = async (req, res) => {
       }
 
       const voiceFile = req.files.file;
-
       const base64Audio = voiceFile.data.toString("base64");
-
-      // Store the base64 string directly in the database and Prefix with data URI for easier playback
       content = `data:${voiceFile.mimetype};base64,${base64Audio}`;
-
-      //console.log(`Voice converted to base64, size: ${content.length} bytes`);
     } else {
-      // Handle text message
       if (!req.body.content) {
         return res.status(400).json({
           success: false,
@@ -63,17 +161,13 @@ exports.addMessage = async (req, res) => {
     });
 
     if (!remark) {
-      //console.log(`Creating new remark document for student: ${studentId}`);
       remark = new Remark({
         student: studentId,
         classroom: classroomId,
         messages: [],
       });
-    } else {
-      //console.log(`Found existing remark document: ${remark._id}`);
     }
 
-    // Add the message
     remark.messages.push({
       type,
       content,
@@ -81,6 +175,35 @@ exports.addMessage = async (req, res) => {
     });
 
     await remark.save();
+
+    // Send notification to this specific student's parents only
+    if (student?.parents?.length > 0) {
+      const studentParentIds = student.parents
+        .filter((p) => p?.parent && p.parent._id)
+        .map((p) => p.parent._id.toString());
+
+      if (studentParentIds.length > 0) {
+        const notificationMessage =
+          type === "voice"
+            ? `Teacher has sent a voice remark for your child`
+            : `Teacher's remark: ${content}`;
+
+        try {
+          await notificationService.sendClassroomNotification(
+            classroom,
+            "New Remark from Teacher",
+            notificationMessage,
+            "announcement",
+            studentParentIds
+          );
+        } catch (notificationError) {
+          console.warn(
+            `Error sending notification for student ${studentId}:`,
+            notificationError
+          );
+        }
+      }
+    }
 
     res.status(200).json({
       success: true,
@@ -95,15 +218,10 @@ exports.addMessage = async (req, res) => {
   }
 };
 
-// Get remark thread for a student
 exports.getStudentRemark = async (req, res) => {
   try {
     const { studentId } = req.params;
     const classroomId = req.params.id;
-
-    // console.log(
-    //   `Getting remarks for student: ${studentId} in classroom: ${classroomId}`
-    // );
 
     const remark = await Remark.findOne({
       student: studentId,
@@ -193,8 +311,6 @@ exports.addParentReply = async (req, res) => {
     const parentId = req.user.id;
     const { type, content, mimeType } = req.body;
 
-    // console.log("Request body:", req.body);
-
     if (!type) {
       return res.status(400).json({
         success: false,
@@ -216,7 +332,6 @@ exports.addParentReply = async (req, res) => {
       try {
         const actualMimeType = mimeType || "audio/m4a";
         messageContent = `data:${actualMimeType};base64,${content}`;
-        //console.log(`Voice received as base64, size: ${content.length} bytes`);
       } catch (fileError) {
         console.error("Error processing voice data:", fileError);
         return res.status(400).json({
@@ -278,7 +393,6 @@ exports.addParentReply = async (req, res) => {
       });
     }
 
-    // Add the message from parent
     remark.messages.push({
       type,
       content: messageContent,

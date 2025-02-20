@@ -3,7 +3,6 @@ const {
   createClassroom,
   getTeacherClassrooms,
   getClassroomDetails,
-  updateClassroom,
   deleteClassroom,
   addAssignment,
   getAssignments,
@@ -36,7 +35,6 @@ const router = express.Router();
 router.post("/create", isTeacherAuthenticated, createClassroom);
 router.get("/all", isTeacherAuthenticated, getTeacherClassrooms);
 router.get("/:id", isTeacherAuthenticated, getClassroomDetails);
-router.put("/:id", isTeacherAuthenticated, updateClassroom);
 router.delete("/:id", isTeacherAuthenticated, deleteClassroom);
 
 // Assignment routes
