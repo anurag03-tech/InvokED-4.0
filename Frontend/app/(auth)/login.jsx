@@ -12,12 +12,15 @@ import {
 import { useRouter } from "expo-router";
 import { useAuth } from "../context/authContext";
 import axios from "axios";
+import * as Notifications from "expo-notifications";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const API_URL = process.env.EXPO_PUBLIC_MY_API_URL;
+const EXPO_PROJECT_ID = process.env.EXPO_PUBLIC_PROJECT_ID;
 
 const Login = () => {
   const router = useRouter();
-  const { login, user, role } = useAuth();
+  const { login, role } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -66,6 +69,15 @@ const Login = () => {
         );
         const { user, token } = response.data;
         await login(user, token);
+
+        // Register for push notifications after successful parent login
+        try {
+          await registerForPushNotifications();
+        } catch (pushError) {
+          console.error("Push notification registration error:", pushError);
+          // Continue with login flow even if push registration fails
+        }
+
         router.replace("parent/(tabs)/home");
       }
     } catch (err) {
@@ -76,6 +88,48 @@ const Login = () => {
     }
   };
 
+  // Helper function to register for push notifications
+  const registerForPushNotifications = async () => {
+    try {
+      // Check for existing permissions
+      const { status: existingStatus } =
+        await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+
+      // If not already granted, request permission
+      if (existingStatus !== "granted") {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+
+      // If permission not granted, exit
+      if (finalStatus !== "granted") {
+        console.log("Notification permission not granted");
+        return;
+      }
+
+      // Get Expo push token
+      const tokenData = await Notifications.getExpoPushTokenAsync({
+        projectId: EXPO_PROJECT_ID,
+      });
+
+      console.log("Push token obtained on login:", tokenData.data);
+
+      // Store token in AsyncStorage
+      await AsyncStorage.setItem("expoPushToken", tokenData.data);
+
+      // Send token to server
+      await axios.put(`${API_URL}/api/parent/push-token`, {
+        pushToken: tokenData.data,
+      });
+    } catch (error) {
+      console.error(
+        "Error registering for push notifications during login:",
+        error
+      );
+      throw error;
+    }
+  };
   const handleRegisterPress = () => {
     if (role === "teacher") {
       router.push("/registerTeacher");

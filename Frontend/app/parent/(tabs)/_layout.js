@@ -3,8 +3,9 @@ import FontAwesome from "@expo/vector-icons/FontAwesome";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { TouchableOpacity, View, Text, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
+import { useNotification } from "../../context/notificationContext";
 
-const CustomTabButton = ({ label, icon, isFocused, onPress, t }) => {
+const CustomTabButton = ({ label, icon, isFocused, onPress, t, badge }) => {
   return (
     <TouchableOpacity
       style={styles.tabButton}
@@ -12,7 +13,14 @@ const CustomTabButton = ({ label, icon, isFocused, onPress, t }) => {
       onPress={onPress}
     >
       <View style={styles.iconContainer}>
-        {icon}
+        <View>
+          {icon}
+          {badge > 0 && (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{badge > 99 ? "99+" : badge}</Text>
+            </View>
+          )}
+        </View>
         <Text
           style={[
             styles.tabLabel,
@@ -28,6 +36,8 @@ const CustomTabButton = ({ label, icon, isFocused, onPress, t }) => {
 
 const CustomTabBar = ({ state, descriptors, navigation }) => {
   const { t } = useTranslation();
+  const { unreadCount } = useNotification();
+
   return (
     <View style={styles.tabBar}>
       {state.routes.map((route, index) => {
@@ -54,6 +64,10 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
               return (
                 <MaterialIcons name="video-library" size={size} color={color} />
               );
+            case "notifications":
+              return (
+                <MaterialIcons name="notifications" size={size} color={color} />
+              );
             case "chatBot":
               return <MaterialIcons name="chat" size={size} color={color} />;
             case "profile":
@@ -62,6 +76,9 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
               return null;
           }
         };
+
+        // Show badge only on notifications tab
+        const badge = route.name === "notifications" ? unreadCount : 0;
 
         return (
           <CustomTabButton
@@ -75,6 +92,7 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
             isFocused={isFocused}
             onPress={onPress}
             t={t}
+            badge={badge}
           />
         );
       })}
@@ -111,6 +129,23 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     marginTop: -4,
   },
+  badge: {
+    position: "absolute",
+    top: -8,
+    right: -12,
+    backgroundColor: "#EF4444",
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 4,
+  },
+  badgeText: {
+    color: "white",
+    fontSize: 10,
+    fontWeight: "bold",
+  },
 });
 
 const TabsLayout = () => {
@@ -125,6 +160,7 @@ const TabsLayout = () => {
       <Tabs.Screen name="learningVideo" options={{ tabBarLabel: "Learning" }} />
       <Tabs.Screen name="chatBot" options={{ tabBarLabel: "Chat Bot" }} />
       <Tabs.Screen name="profile" options={{ tabBarLabel: "Profile" }} />
+      <Tabs.Screen name="notifications" options={{ tabBarLabel: "Notif." }} />
     </Tabs>
   );
 };

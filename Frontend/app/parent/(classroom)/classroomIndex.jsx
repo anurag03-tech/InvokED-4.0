@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -10,9 +10,11 @@ import {
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useAuth } from "../../context/authContext";
+import { useNotification } from "../../context/notificationContext";
 import { MaterialIcons, FontAwesome5, Ionicons } from "@expo/vector-icons";
 import { useClassroom } from "../../hook/useClassroom";
 import renderMarksSection from "../EnhancedMarksSection";
+import { useTranslation } from "react-i18next";
 
 const API_URL = process.env.EXPO_PUBLIC_MY_API_URL;
 const SECTION_HEIGHT = 300;
@@ -21,7 +23,13 @@ export default function ClassroomDetail() {
   const params = useLocalSearchParams();
   const router = useRouter();
   const { token } = useAuth();
-  const [activeSection, setActiveSection] = useState("announcements");
+  const { t } = useTranslation();
+  const { notifications, markAsRead } = useNotification();
+
+  // Get activeSection from params or default to announcements
+  const [activeSection, setActiveSection] = useState(
+    params.activeSection || "announcements"
+  );
 
   // Use the custom hook instead of local state and useEffect
   const { classroom, loading, isOnline } = useClassroom(
@@ -29,6 +37,34 @@ export default function ClassroomDetail() {
     token,
     API_URL
   );
+
+  // Get unread notifications count for this classroom
+  const getUnreadCount = (sectionType) => {
+    if (!notifications || !classroom) return 0;
+
+    return notifications.filter(
+      (notification) =>
+        !notification.isRead &&
+        notification.classroom?._id === classroom._id &&
+        notification.type === sectionType
+    ).length;
+  };
+
+  // Mark notifications as read when viewing section
+  useEffect(() => {
+    if (activeSection && classroom) {
+      const notificationsToMark = notifications.filter(
+        (notification) =>
+          !notification.isRead &&
+          notification.classroom?._id === classroom._id &&
+          notification.type === activeSection
+      );
+
+      notificationsToMark.forEach((notification) => {
+        markAsRead(notification._id);
+      });
+    }
+  }, [activeSection, classroom, notifications]);
 
   // Error handling for missing ID
   if (!params.id) {
@@ -62,7 +98,7 @@ export default function ClassroomDetail() {
               ))
             ) : (
               <Text className="text-gray-500 italic p-4">
-                No announcements yet
+                {t("No announcements yet")}
               </Text>
             )}
           </ScrollView>
@@ -87,13 +123,14 @@ export default function ClassroomDetail() {
                     {assignment.description}
                   </Text>
                   <Text className="text-blue-600">
-                    Due: {new Date(assignment.dueDate).toLocaleDateString()}
+                    {t("Due")}:{" "}
+                    {new Date(assignment.dueDate).toLocaleDateString()}
                   </Text>
                 </View>
               ))
             ) : (
               <Text className="text-gray-500 italic p-4">
-                No assignments yet
+                {t("No assignments yet")}
               </Text>
             )}
           </ScrollView>
@@ -116,7 +153,9 @@ export default function ClassroomDetail() {
   if (!classroom) {
     return (
       <View className="flex-1 justify-center items-center p-4">
-        <Text className="text-xl text-gray-600">Classroom not found</Text>
+        <Text className="text-xl text-gray-600">
+          {t("Classroom not found")}
+        </Text>
       </View>
     );
   }
@@ -127,43 +166,52 @@ export default function ClassroomDetail() {
       {!isOnline && (
         <View className="bg-yellow-500 px-4 py-2">
           <Text className="text-white text-center">
-            Offline Mode - Some data may not be up to date
+            {t("Offline Mode - Some data may not be up to date")}
           </Text>
         </View>
       )}
 
       {/* Header Section */}
-      <View className="bg-blue-600 px-6 py-3">
-        <Text className="text-2xl font-bold text-white mb-1">
-          Subject - {classroom.subject}
+      <View className="bg-blue-600 p-6">
+        <Text className="text-2xl font-bold text-white mb-2">
+          {t("Grade")} {classroom.grade} - {t("Section")} {classroom.section}
         </Text>
         <Text className="text-lg text-white">
-          Teacher: {classroom.teacher?.name}
+          {t("Subject")}: {classroom.subject}
         </Text>
-        <Text className="text-white mt-1">
-          Class {classroom.grade} - {classroom.section}
+        <Text className="text-white mt-2">
+          {t("Teacher")}: {classroom.teacher?.name}
         </Text>
       </View>
 
       {/* Navigation Buttons */}
-      <View className="flex-row justify-between px-4 pt-2">
+      <View className="flex-row justify-between px-4 py-2">
         <TouchableOpacity
           className={`flex-1 items-center py-3 mx-1 rounded-lg ${
             activeSection === "announcements" ? "bg-blue-500" : "bg-gray-200"
           }`}
           onPress={() => setActiveSection("announcements")}
         >
-          <MaterialIcons
-            name="announcement"
-            size={24}
-            color={activeSection === "announcements" ? "white" : "#4B5563"}
-          />
+          <View className="relative">
+            <MaterialIcons
+              name="announcement"
+              size={24}
+              color={activeSection === "announcements" ? "white" : "#4B5563"}
+            />
+            {getUnreadCount("announcement") > 0 && (
+              <View className="absolute -top-2 -right-2 bg-red-500 rounded-full w-5 h-5 items-center justify-center">
+                <Text className="text-white text-xs font-bold">
+                  {getUnreadCount("announcement")}
+                </Text>
+              </View>
+            )}
+          </View>
           <Text
             className={`text-sm mt-1 ${
               activeSection === "announcements" ? "text-white" : "text-gray-600"
             }`}
           >
-            Announcements
+            {t("Announcements")}
           </Text>
         </TouchableOpacity>
 
@@ -173,17 +221,26 @@ export default function ClassroomDetail() {
           }`}
           onPress={() => setActiveSection("assignments")}
         >
-          <FontAwesome5
-            name="tasks"
-            size={24}
-            color={activeSection === "assignments" ? "white" : "#4B5563"}
-          />
+          <View className="relative">
+            <FontAwesome5
+              name="tasks"
+              size={24}
+              color={activeSection === "assignments" ? "white" : "#4B5563"}
+            />
+            {getUnreadCount("assignment") > 0 && (
+              <View className="absolute -top-2 -right-2 bg-red-500 rounded-full w-5 h-5 items-center justify-center">
+                <Text className="text-white text-xs font-bold">
+                  {getUnreadCount("assignment")}
+                </Text>
+              </View>
+            )}
+          </View>
           <Text
             className={`text-sm mt-1 ${
               activeSection === "assignments" ? "text-white" : "text-gray-600"
             }`}
           >
-            Assignments
+            {t("Assignments")}
           </Text>
         </TouchableOpacity>
 
@@ -203,16 +260,16 @@ export default function ClassroomDetail() {
               activeSection === "marks" ? "text-white" : "text-gray-600"
             }`}
           >
-            Marks
+            {t("Marks")}
           </Text>
         </TouchableOpacity>
       </View>
 
       {/* Content Section */}
-      <View className="flex-1 p-3">{renderSection()}</View>
+      <View className="flex-1 p-4">{renderSection()}</View>
 
       {/* Teacher Remarks Button */}
-      <View className="p-3 border-t border-gray-200 bg-white">
+      <View className="p-4 border-t border-gray-200 bg-white">
         <TouchableOpacity
           className="bg-blue-600 p-4 rounded-lg flex-row justify-center items-center"
           onPress={() =>
@@ -227,8 +284,19 @@ export default function ClassroomDetail() {
             })
           }
         >
-          <MaterialIcons name="comment" size={24} color="white" />
-          <Text className="text-white font-semibold ml-2">Teacher Remarks</Text>
+          <View className="relative">
+            <MaterialIcons name="comment" size={24} color="white" />
+            {getUnreadCount("remark") > 0 && (
+              <View className="absolute -top-2 -right-2 bg-red-500 rounded-full w-5 h-5 items-center justify-center">
+                <Text className="text-white text-xs font-bold">
+                  {getUnreadCount("remark")}
+                </Text>
+              </View>
+            )}
+          </View>
+          <Text className="text-white font-semibold ml-2">
+            {t("Teacher Remarks")}
+          </Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

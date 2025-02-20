@@ -10,6 +10,7 @@ import UseVoiceRouteAssistant from "./voiceAssistant/UseVoiceRouteAssistant";
 import { MuteProvider } from "./voiceAssistant/MuteContext";
 import { VoiceProvider } from "./voiceAssistant/VoiceContext";
 import { useSegments } from "expo-router";
+import { NotificationProvider } from "./context/notificationContext";
 
 function ProtectedLayout() {
   const { user, loading, role } = useAuth();
@@ -117,9 +118,11 @@ export default function RootLayout() {
   console.log("Current Route:==>", currentRoute);
   return (
     <AuthProvider>
-      <SafeAreaProvider>
-        <ProtectedLayout />
-      </SafeAreaProvider>
+      <NotificationProvider>
+        <SafeAreaProvider>
+          <ProtectedLayout />
+        </SafeAreaProvider>
+      </NotificationProvider>
     </AuthProvider>
   );
 }

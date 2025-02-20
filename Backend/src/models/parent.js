@@ -33,6 +33,9 @@ const parentSchema = new mongoose.Schema({
   avatar: {
     type: String,
   },
+  pushToken: {
+    type: String,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

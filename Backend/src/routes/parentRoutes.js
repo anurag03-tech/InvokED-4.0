@@ -8,6 +8,7 @@ const {
   getAllAssignments,
   getAllMarks,
   getClassroomTimetable,
+  updatePushToken,
 } = require("../controllers/parentController");
 const { isParentAuthenticated } = require("../middlewares/parentAuth");
 const {
@@ -49,5 +50,8 @@ router.get(
   isParentAuthenticated,
   getClassroomTimetable
 );
+
+// Update push token
+router.put("/push-token", isParentAuthenticated, updatePushToken);
 
 module.exports = router;

@@ -15,8 +15,11 @@ import { MaterialIcons } from "@expo/vector-icons";
 import axios from "axios";
 import CustomDropdown from "./components/customDropdown";
 import useDropdown from "./components/useDropdown";
+import * as Notifications from "expo-notifications";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const API_URL = process.env.EXPO_PUBLIC_MY_API_URL;
+const EXPO_PROJECT_ID = process.env.EXPO_PUBLIC_PROJECT_ID;
 
 const MAX_CHILDREN = 10;
 
@@ -237,12 +240,64 @@ const ParentRegistrationScreen = () => {
       const { user, token } = response.data;
 
       await login(user, token);
+
+      // Register for push notifications after successful registration
+      try {
+        await registerForPushNotifications();
+      } catch (pushError) {
+        console.error("Push notification registration error:", pushError);
+        // Continue with registration flow even if push registration fails
+      }
+
       router.replace("parent/(tabs)/home");
     } catch (err) {
       setError(err.response?.data?.message || "Registration failed");
       console.error("Registration error:", err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Helper function to register for push notifications (same as in login)
+  const registerForPushNotifications = async () => {
+    try {
+      // Check for existing permissions
+      const { status: existingStatus } =
+        await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+
+      // If not already granted, request permission
+      if (existingStatus !== "granted") {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+
+      // If permission not granted, exit
+      if (finalStatus !== "granted") {
+        console.log("Notification permission not granted");
+        return;
+      }
+
+      // Get Expo push token
+      const tokenData = await Notifications.getExpoPushTokenAsync({
+        projectId: EXPO_PROJECT_ID,
+      });
+
+      console.log("Push token obtained on registration:", tokenData.data);
+
+      // Store token in AsyncStorage
+      await AsyncStorage.setItem("expoPushToken", tokenData.data);
+
+      // Send token to server
+      await axios.put(`${API_URL}/api/parent/push-token`, {
+        pushToken: tokenData.data,
+      });
+    } catch (error) {
+      console.error(
+        "Error registering for push notifications during registration:",
+        error
+      );
+      throw error;
     }
   };
 

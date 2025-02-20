@@ -505,3 +505,35 @@ exports.getClassroomTimetable = async (req, res) => {
     });
   }
 };
+
+// notifications
+exports.updatePushToken = async (req, res) => {
+  try {
+    const { pushToken } = req.body;
+
+    // Update to handle token removal
+    const updateData =
+      pushToken === null
+        ? { $unset: { pushToken: "" } } // Remove the field entirely
+        : { pushToken }; // Set the new token
+
+    // Update the parent's push token
+    const parent = await Parent.findByIdAndUpdate(req.user.id, updateData, {
+      new: true,
+    });
+
+    res.status(200).json({
+      success: true,
+      message:
+        pushToken === null
+          ? "Push token removed successfully"
+          : "Push token updated successfully",
+    });
+  } catch (error) {
+    console.error("Error updating push token:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};

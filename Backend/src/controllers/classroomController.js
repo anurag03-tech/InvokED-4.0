@@ -1,6 +1,7 @@
 const Classroom = require("../models/classroom");
 const Teacher = require("../models/teacher");
 const Student = require("../models/student");
+const notificationService = require("../services/notificationService");
 
 exports.createClassroom = async (req, res) => {
   try {
@@ -329,11 +330,19 @@ exports.deleteAssignment = async (req, res) => {
 };
 
 // Add announcement
+
 exports.addAnnouncement = async (req, res) => {
   try {
     const { title, content } = req.body;
 
-    const classroom = await Classroom.findById(req.params.id);
+    // Populate students to check for parents
+    const classroom = await Classroom.findById(req.params.id).populate({
+      path: "students",
+      populate: {
+        path: "parents.parent",
+        select: "pushToken",
+      },
+    });
 
     if (!classroom) {
       return res.status(404).json({
@@ -357,11 +366,40 @@ exports.addAnnouncement = async (req, res) => {
 
     await classroom.save();
 
+    // Check if there are any students with parents
+    const parentIds = [];
+
+    if (classroom.students && classroom.students.length > 0) {
+      classroom.students.forEach((student) => {
+        if (student.parents && student.parents.length > 0) {
+          student.parents.forEach((parentInfo) => {
+            if (parentInfo.parent && parentInfo.parent._id) {
+              parentIds.push(parentInfo.parent._id.toString());
+            }
+          });
+        }
+      });
+    }
+
+    // Only send notification if there are recipients
+    if (parentIds.length > 0) {
+      console.log(`Sending notification to ${parentIds.length} parents`);
+      await notificationService.sendClassroomNotification(
+        classroom,
+        `New Announcement: ${title}`,
+        content,
+        "announcement"
+      );
+    } else {
+      console.log("No parent recipients found for this classroom");
+    }
+
     res.status(200).json({
       success: true,
       classroom,
     });
   } catch (error) {
+    console.error("Error adding announcement:", error);
     res.status(500).json({
       success: false,
       message: error.message,
