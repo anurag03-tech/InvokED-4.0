@@ -3,7 +3,6 @@ import {
   View,
   Text,
   Image,
-  TextInput,
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
@@ -14,6 +13,7 @@ import { useAuth } from "../context/authContext";
 import axios from "axios";
 import * as Notifications from "expo-notifications";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Input } from "~/components/ui/input";
 
 const API_URL = process.env.EXPO_PUBLIC_MY_API_URL;
 const EXPO_PROJECT_ID = process.env.EXPO_PUBLIC_PROJECT_ID;
@@ -27,8 +27,6 @@ const Login = () => {
   });
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-
-  console.log("user", role);
 
   const handleChange = (name) => (value) => {
     setError("");
@@ -69,15 +67,7 @@ const Login = () => {
         );
         const { user, token } = response.data;
         await login(user, token);
-
-        // Register for push notifications after successful parent login
-        try {
-          await registerForPushNotifications();
-        } catch (pushError) {
-          console.error("Push notification registration error:", pushError);
-          // Continue with login flow even if push registration fails
-        }
-
+        await registerForPushNotifications();
         router.replace("parent/(tabs)/home");
       }
     } catch (err) {
@@ -88,48 +78,36 @@ const Login = () => {
     }
   };
 
-  // Helper function to register for push notifications
   const registerForPushNotifications = async () => {
     try {
-      // Check for existing permissions
       const { status: existingStatus } =
         await Notifications.getPermissionsAsync();
       let finalStatus = existingStatus;
 
-      // If not already granted, request permission
       if (existingStatus !== "granted") {
         const { status } = await Notifications.requestPermissionsAsync();
         finalStatus = status;
       }
 
-      // If permission not granted, exit
       if (finalStatus !== "granted") {
         console.log("Notification permission not granted");
         return;
       }
 
-      // Get Expo push token
       const tokenData = await Notifications.getExpoPushTokenAsync({
         projectId: EXPO_PROJECT_ID,
       });
 
-      console.log("Push token obtained on login:", tokenData.data);
-
-      // Store token in AsyncStorage
       await AsyncStorage.setItem("expoPushToken", tokenData.data);
-
-      // Send token to server
       await axios.put(`${API_URL}/api/parent/push-token`, {
         pushToken: tokenData.data,
       });
     } catch (error) {
-      console.error(
-        "Error registering for push notifications during login:",
-        error
-      );
+      console.error("Error registering for push notifications:", error);
       throw error;
     }
   };
+
   const handleRegisterPress = () => {
     if (role === "teacher") {
       router.push("/registerTeacher");
@@ -139,7 +117,7 @@ const Login = () => {
   };
 
   return (
-    <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
+    <KeyboardAvoidingView behavior="padding" className="flex-1">
       <ScrollView
         className="flex-1 bg-white"
         contentContainerStyle={{
@@ -152,44 +130,45 @@ const Login = () => {
         <View className="items-center w-full">
           <Image
             source={require("../../assets/images/logo.jpg")}
-            className="w-50 h-25 mb-5"
-            style={{ width: 280, height: 280 }}
+            className="w-64 h-64 mb-10"
           />
 
           <Text className="text-3xl font-bold text-blue-600 mb-5">Login</Text>
 
-          <View className="w-full mb-4">
-            <Text className="text-base font-medium mb-1">Email</Text>
-            <TextInput
-              className="border border-gray-300 rounded-md p-2.5 text-base w-full"
-              placeholder="Enter your email"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              value={formData.email}
-              onChangeText={handleChange("email")}
-              editable={!isLoading}
-            />
-          </View>
+          <View className="w-full gap-y-2">
+            <View>
+              <Text className="text-base font-medium mb-1">Email</Text>
+              <Input
+                placeholder="Enter your email"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                value={formData.email}
+                onChangeText={handleChange("email")}
+                editable={!isLoading}
+                className="bg-white"
+              />
+            </View>
 
-          <View className="w-full mb-4">
-            <Text className="text-base font-medium mb-1">Password</Text>
-            <TextInput
-              className="border border-gray-300 rounded-md p-2.5 text-base w-full"
-              placeholder="Enter your password"
-              secureTextEntry
-              value={formData.password}
-              onChangeText={handleChange("password")}
-              editable={!isLoading}
-            />
+            <View>
+              <Text className="text-base font-medium mb-1">Password</Text>
+              <Input
+                placeholder="Enter your password"
+                secureTextEntry
+                value={formData.password}
+                onChangeText={handleChange("password")}
+                editable={!isLoading}
+                className="bg-white"
+              />
+            </View>
           </View>
 
           {error ? (
-            <Text className="text-red-500 mb-2.5 text-center">{error}</Text>
+            <Text className="text-red-500 mt-2 mb-2 text-center">{error}</Text>
           ) : null}
 
           <TouchableOpacity
-            className={`bg-blue-600 py-3 px-5 rounded-md w-full items-center ${
+            className={`bg-blue-600 py-3 px-5 rounded-md w-full items-center mt-4 ${
               isLoading ? "opacity-70" : ""
             }`}
             onPress={handleSubmit}

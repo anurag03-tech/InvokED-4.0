@@ -3,7 +3,6 @@ import {
   View,
   Text,
   Image,
-  TextInput,
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
@@ -14,6 +13,7 @@ import { useAuth } from "../context/authContext";
 import axios from "axios";
 import CustomDropdown from "./components/customDropdown";
 import useDropdown from "./components/useDropdown";
+import { Input } from "~/components/ui/input";
 
 const API_URL = process.env.EXPO_PUBLIC_MY_API_URL;
 
@@ -25,7 +25,6 @@ const RegisterScreen = () => {
     email: "",
     password: "",
     school: "",
-    // employeeId: "",
   });
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -69,11 +68,6 @@ const RegisterScreen = () => {
       return;
     }
 
-    // if (!formData.employeeId.trim()) {
-    //   setError("Employee ID is required");
-    //   return;
-    // }
-
     if (!formData.school) {
       setError("Please select a school");
       return;
@@ -107,19 +101,19 @@ const RegisterScreen = () => {
   const renderInputField = (name, label, options = {}) => (
     <View key={name} className="w-full mb-4">
       <Text className="text-base font-medium mb-1">{label}</Text>
-      <TextInput
-        className="border border-gray-300 rounded-md p-2.5 text-base w-full"
+      <Input
         placeholder={`Enter ${label.toLowerCase()}`}
         value={formData[name]}
         onChangeText={handleChange(name)}
         editable={!isLoading}
+        className="bg-white"
         {...options}
       />
     </View>
   );
 
   return (
-    <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
+    <KeyboardAvoidingView behavior="padding" className="flex-1">
       <ScrollView
         className="flex-1 bg-white"
         contentContainerStyle={{
@@ -132,8 +126,7 @@ const RegisterScreen = () => {
         <View className="items-center w-full">
           <Image
             source={require("../../assets/images/reg_logo.jpg")}
-            className="w-50 h-25 mb-5"
-            style={{ width: 450, height: 110 }}
+            className="w-full h-28 mb-5"
             resizeMode="contain"
           />
 
@@ -149,7 +142,7 @@ const RegisterScreen = () => {
           })}
           {renderInputField("password", "Password", { secureTextEntry: true })}
 
-          <View className="w-full ">
+          <View className="w-full">
             <CustomDropdown
               label="School"
               value={formData.school}
@@ -164,14 +157,12 @@ const RegisterScreen = () => {
             />
           </View>
 
-          {/* {renderInputField("employeeId", "Employee ID")} */}
-
           {error ? (
             <Text className="text-red-500 mb-2.5 text-center">{error}</Text>
           ) : null}
 
           <TouchableOpacity
-            className={`bg-blue-600 py-3 px-5 rounded-md w-full items-center mt-2${
+            className={`bg-blue-600 py-3 px-5 rounded-md w-full items-center mt-4 ${
               isLoading ? "opacity-70" : ""
             }`}
             onPress={handleSubmit}

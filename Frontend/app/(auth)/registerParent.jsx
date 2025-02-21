@@ -3,7 +3,6 @@ import {
   View,
   Text,
   Image,
-  TextInput,
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
@@ -17,6 +16,7 @@ import CustomDropdown from "./components/customDropdown";
 import useDropdown from "./components/useDropdown";
 import * as Notifications from "expo-notifications";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Input } from "~/components/ui/input";
 
 const API_URL = process.env.EXPO_PUBLIC_MY_API_URL;
 const EXPO_PROJECT_ID = process.env.EXPO_PUBLIC_PROJECT_ID;
@@ -27,7 +27,6 @@ const ParentRegistrationScreen = () => {
   const router = useRouter();
   const { login } = useAuth();
 
-  // Create fixed number of dropdown hooks upfront
   const schoolDropdownHooks = Array(MAX_CHILDREN)
     .fill(null)
     .map(() => useDropdown());
@@ -99,7 +98,6 @@ const ParentRegistrationScreen = () => {
           ...prev,
           children: prev.children.filter((_, i) => i !== index),
         }));
-        // Reset the dropdown state for removed child
         schoolDropdownHooks[index].toggleDropdown(false);
       }
     },
@@ -129,13 +127,13 @@ const ParentRegistrationScreen = () => {
 
           <View className="w-full mb-4">
             <Text className="text-base font-medium mb-1">Child's Name</Text>
-            <TextInput
-              className="border border-gray-300 rounded-md p-2.5 text-base w-full bg-white"
+            <Input
               placeholder="Enter child's name"
               value={child.name}
               onChangeText={(value) => handleChildChange(index, "name", value)}
               editable={!isLoading}
               autoCapitalize="words"
+              className="bg-white"
             />
           </View>
 
@@ -154,14 +152,14 @@ const ParentRegistrationScreen = () => {
 
           <View className="w-full mb-4">
             <Text className="text-base font-medium mb-1">Admission Number</Text>
-            <TextInput
-              className="border border-gray-300 rounded-md p-2.5 text-base w-full bg-white"
+            <Input
               placeholder="Enter admission number"
               value={child.admissionNumber}
               onChangeText={(value) =>
                 handleChildChange(index, "admissionNumber", value)
               }
               editable={!isLoading}
+              className="bg-white"
             />
           </View>
         </View>
@@ -181,12 +179,12 @@ const ParentRegistrationScreen = () => {
     (name, label, options = {}) => (
       <View className="w-full mb-4">
         <Text className="text-base font-medium mb-1">{label}</Text>
-        <TextInput
-          className="border border-gray-300 rounded-md p-2.5 text-base w-full"
+        <Input
           placeholder={`Enter ${label.toLowerCase()}`}
           value={formData[name]}
           onChangeText={handleChange(name)}
           editable={!isLoading}
+          className="bg-white"
           {...options}
         />
       </View>
@@ -210,7 +208,6 @@ const ParentRegistrationScreen = () => {
       }
     }
 
-    // Validate children data
     for (let i = 0; i < formData.children.length; i++) {
       const child = formData.children[i];
       if (!child.name || !child.school || !child.admissionNumber) {
@@ -240,15 +237,7 @@ const ParentRegistrationScreen = () => {
       const { user, token } = response.data;
 
       await login(user, token);
-
-      // Register for push notifications after successful registration
-      try {
-        await registerForPushNotifications();
-      } catch (pushError) {
-        console.error("Push notification registration error:", pushError);
-        // Continue with registration flow even if push registration fails
-      }
-
+      await registerForPushNotifications();
       router.replace("parent/(tabs)/home");
     } catch (err) {
       setError(err.response?.data?.message || "Registration failed");
@@ -258,45 +247,32 @@ const ParentRegistrationScreen = () => {
     }
   };
 
-  // Helper function to register for push notifications (same as in login)
   const registerForPushNotifications = async () => {
     try {
-      // Check for existing permissions
       const { status: existingStatus } =
         await Notifications.getPermissionsAsync();
       let finalStatus = existingStatus;
 
-      // If not already granted, request permission
       if (existingStatus !== "granted") {
         const { status } = await Notifications.requestPermissionsAsync();
         finalStatus = status;
       }
 
-      // If permission not granted, exit
       if (finalStatus !== "granted") {
         console.log("Notification permission not granted");
         return;
       }
 
-      // Get Expo push token
       const tokenData = await Notifications.getExpoPushTokenAsync({
         projectId: EXPO_PROJECT_ID,
       });
 
-      console.log("Push token obtained on registration:", tokenData.data);
-
-      // Store token in AsyncStorage
       await AsyncStorage.setItem("expoPushToken", tokenData.data);
-
-      // Send token to server
       await axios.put(`${API_URL}/api/parent/push-token`, {
         pushToken: tokenData.data,
       });
     } catch (error) {
-      console.error(
-        "Error registering for push notifications during registration:",
-        error
-      );
+      console.error("Error registering for push notifications:", error);
       throw error;
     }
   };
@@ -311,7 +287,7 @@ const ParentRegistrationScreen = () => {
   };
 
   return (
-    <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
+    <KeyboardAvoidingView behavior="padding" className="flex-1">
       <ScrollView
         className="flex-1 bg-white"
         contentContainerStyle={{
@@ -324,8 +300,8 @@ const ParentRegistrationScreen = () => {
         <View className="items-center w-full">
           <Image
             source={require("../../assets/images/reg_logo.jpg")}
-            className="w-50 h-25 mb-5"
-            style={{ width: 350, height: 100 }}
+            className="w-full h-24 mb-5"
+            resizeMode="contain"
           />
 
           <Text className="text-3xl font-bold text-blue-600 mb-5">
