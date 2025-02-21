@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, Pressable } from "react-native";
-import i18n from "../../utils/language/i18n";
+import i18n from "../../../utils/language/i18n";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 
 const LanguageSelector = () => {

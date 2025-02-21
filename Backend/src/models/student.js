@@ -13,6 +13,7 @@ const studentSchema = new mongoose.Schema({
     type: String,
     required: [true, "Please enter admission number"],
     unique: true,
+    trim: true,
   },
   classrooms: [
     {

@@ -34,17 +34,18 @@ exports.register = async (req, res) => {
 
     // First verify all children exist in the database
     for (const child of children) {
-      const { school, admissionNumber } = child;
+      const { school, admissionNumber, name } = child;
 
       const existingStudent = await Student.findOne({
-        school,
-        admissionNumber,
-      });
+        school: school.trim(),
+        admissionNumber: admissionNumber.trim(),
+        name: name.trim(),
+      }).collation({ locale: "en", strength: 2 });
 
       if (!existingStudent) {
         return res.status(404).json({
           success: false,
-          message: `Student with admission number ${admissionNumber} not found at ${school}. Please verify the details or contact the school.`,
+          message: `${name} admission number ${admissionNumber} not found at ${school}. Please verify the details or contact the class teacher`,
         });
       }
 
@@ -166,7 +167,7 @@ exports.getProfile = async (req, res) => {
       populate: {
         path: "classrooms",
         select:
-          "grade section subject teacher classTeacher attendance announcements",
+          "grade section subject teacher classTeacher attendance announcements timetable",
         populate: [
           {
             path: "teacher",
@@ -199,36 +200,7 @@ exports.getProfile = async (req, res) => {
   }
 };
 
-// Update parent profile
-exports.updateProfile = async (req, res) => {
-  try {
-    const { name, phone } = req.body;
-
-    const parent = await Parent.findByIdAndUpdate(
-      req.user.id,
-      {
-        $set: {
-          name,
-          phone,
-        },
-      },
-      { new: true }
-    );
-
-    res.status(200).json({
-      success: true,
-      message: "Profile updated successfully",
-      parent,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
-
-// Add new function for getting classroom details
+// classroom details
 
 exports.getClassroomDetails = async (req, res) => {
   try {
@@ -427,8 +399,6 @@ exports.getAllMarks = async (req, res) => {
     });
   }
 };
-
-//------------------------------------------------------
 
 // Get timetable for a specific classroom
 exports.getClassroomTimetable = async (req, res) => {

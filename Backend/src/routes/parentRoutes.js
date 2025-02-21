@@ -3,7 +3,6 @@ const {
   register,
   login,
   getProfile,
-  updateProfile,
   getClassroomDetails,
   getAllAssignments,
   getAllMarks,
@@ -24,7 +23,6 @@ router.post("/login", login);
 
 // Profile routes
 router.get("/profile", isParentAuthenticated, getProfile);
-router.put("/profile", isParentAuthenticated, updateProfile);
 
 // Classroom routes
 router.get("/classroom/:id", isParentAuthenticated, getClassroomDetails);

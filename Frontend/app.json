@@ -23,7 +23,7 @@
     "android": {
       "package": "com.anurag2003.frontend",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#ffffff"
       },
       "permissions": ["RECORD_AUDIO"]

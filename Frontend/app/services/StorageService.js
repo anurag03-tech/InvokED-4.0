@@ -1,15 +1,50 @@
-// services/NetworkService.js
-import NetInfo from "@react-native-community/netinfo";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-class NetworkService {
-  static async isConnected() {
-    const networkState = await NetInfo.fetch();
-    return networkState.isConnected;
+class StorageService {
+  static async saveParentProfile(profileData) {
+    try {
+      await AsyncStorage.setItem(
+        "parentProfile",
+        JSON.stringify({
+          data: profileData,
+          lastUpdated: new Date().toISOString(),
+        })
+      );
+    } catch (error) {
+      console.error("Error saving profile:", error);
+    }
   }
 
-  static addNetworkListener(callback) {
-    return NetInfo.addEventListener(callback);
+  static async getParentProfile() {
+    try {
+      const data = await AsyncStorage.getItem("parentProfile");
+      return data ? JSON.parse(data) : null;
+    } catch (error) {
+      console.error("Error getting profile:", error);
+      return null;
+    }
+  }
+  static async saveClassroomData(classroomId, classroomData) {
+    try {
+      await AsyncStorage.setItem(
+        `classroom_${classroomId}`,
+        JSON.stringify({
+          data: classroomData,
+          lastUpdated: new Date().toISOString(),
+        })
+      );
+    } catch (error) {
+      console.error("Error saving classroom data:", error);
+    }
+  }
+
+  static async getClassroomData(classroomId) {
+    try {
+      const data = await AsyncStorage.getItem(`classroom_${classroomId}`);
+      return data ? JSON.parse(data) : null;
+    } catch (error) {
+      console.error("Error getting classroom data:", error);
+      return null;
+    }
   }
 }
-
-export default NetworkService;

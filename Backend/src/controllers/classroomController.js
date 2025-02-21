@@ -234,7 +234,7 @@ exports.addAssignment = async (req, res) => {
 
     // Only send notification if there are recipients
     if (parentIds.length > 0) {
-      console.log(`Sending notification to ${parentIds.length} parents`);
+      //console.log(`Sending notification to ${parentIds.length} parents`);
       await notificationService.sendClassroomNotification(
         classroom,
         `Assignment: ${title}`,
@@ -242,7 +242,7 @@ exports.addAssignment = async (req, res) => {
         "assignment"
       );
     } else {
-      console.log("No parent recipients found for this classroom");
+      //console.log("No parent recipients found for this classroom");
     }
 
     res.status(200).json({
@@ -382,7 +382,7 @@ exports.addAnnouncement = async (req, res) => {
 
     // Only send notification if there are recipients
     if (parentIds.length > 0) {
-      console.log(`Sending notification to ${parentIds.length} parents`);
+      //console.log(`Sending notification to ${parentIds.length} parents`);
       await notificationService.sendClassroomNotification(
         classroom,
         `Announcement: ${title}`,
@@ -390,7 +390,7 @@ exports.addAnnouncement = async (req, res) => {
         "announcement"
       );
     } else {
-      console.log("No parent recipients found for this classroom");
+      //console.log("No parent recipients found for this classroom");
     }
 
     res.status(200).json({
@@ -804,7 +804,7 @@ exports.markBulkAttendance = async (req, res) => {
   }
 };
 
-//-----------------
+//timetable
 exports.uploadTimetable = async (req, res) => {
   try {
     const { image } = req.body;
@@ -867,8 +867,8 @@ exports.getTimetable = async (req, res) => {
   try {
     const classId = req.params.id;
 
-    console.log("Received Classroom ID:", classId);
-    console.log("Logged in User ID:", req.user.id);
+    //console.log("Received Classroom ID:", classId);
+    //console.log("Logged in User ID:", req.user.id);
 
     const classroom = await Classroom.findById(classId);
 

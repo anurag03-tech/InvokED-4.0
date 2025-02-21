@@ -1,55 +1,126 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, Image, TouchableOpacity, ScrollView } from "react-native";
+import {
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+} from "react-native";
 import { useAuth } from "../../context/authContext";
 import { useRouter } from "expo-router";
 import { MaterialIcons, Ionicons, Feather } from "@expo/vector-icons";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import i18n from "i18next";
 
-const parentingTips = [
-  {
-    id: 1,
-    tip: "Listen actively to your child - it builds trust and communication",
-    icon: "hearing",
-  },
-  {
-    id: 2,
-    tip: "Create and maintain consistent daily routines",
-    icon: "schedule",
-  },
-  {
-    id: 3,
-    tip: "Praise effort over results to build a growth mindset",
-    icon: "psychology",
-  },
-  {
-    id: 4,
-    tip: "Make time for one-on-one interaction with each child daily",
-    icon: "people",
-  },
-  {
-    id: 5,
-    tip: "Set clear, age-appropriate expectations and boundaries",
-    icon: "dashboard",
-  },
-];
-
-const dailyThoughts = [
-  "Every child is a different kind of flower and all together make this world a beautiful garden.",
-  "Your child's success is not just about grades, but about growing into a kind, confident person.",
-  "The way we talk to our children becomes their inner voice.",
-  "Behind every child who believes in themselves is a parent who believed first.",
-  "Every day is a new opportunity to make a positive impact on your child's life.",
-  "A child's life is like a piece of paper on which every person leaves a mark.",
-];
-
-export default function ProfileScreen() {
+const ProfileScreen = () => {
   const { user, logout } = useAuth();
   const router = useRouter();
-  const [todaysThought, setTodaysThought] = useState("");
+  const [tips, setTips] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const currentLanguage = i18n.language;
+
+  const generateTips = async (lang) => {
+    try {
+      const genAI = new GoogleGenerativeAI(
+        process.env.EXPO_PUBLIC_GOOGLE_GEMINI_API_KEY
+      );
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+      const prompt = `IMPORTANT: Respond with valid JSON only. No backticks, no comments, no additional text.
+        Generate parenting tips in ${lang} language.
+        Return a JSON object in this exact format:
+        {
+          "tips": [
+            {"tip": "<first parenting tip in ${lang}>", "icon": "bulb"},
+            {"tip": "<second parenting tip in ${lang}>", "icon": "bulb"},
+            {"tip": "<third parenting tip in ${lang}>", "icon": "bulb"},
+            {"tip": "<fourth parenting tip in ${lang}>", "icon": "bulb"},
+            {"tip": "<fifth parenting tip in ${lang}>", "icon": "bulb"}
+          ]
+        }`;
+
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      let text = response.text().trim();
+
+      // Clean up the response
+      if (text.startsWith("```json")) {
+        text = text.slice(7, -3);
+      } else if (text.startsWith("```")) {
+        text = text.slice(3, -3);
+      }
+
+      const parsed = JSON.parse(text);
+
+      if (
+        parsed.tips &&
+        Array.isArray(parsed.tips) &&
+        parsed.tips.length === 5
+      ) {
+        return parsed.tips;
+      }
+      return null;
+    } catch (error) {
+      console.error("Error generating tips:", error);
+      return null;
+    }
+  };
+
+  const fetchDailyTips = async () => {
+    try {
+      setLoading(true);
+      const lastFetchDate = await AsyncStorage.getItem("lastTipsFetchDate");
+      const cachedLanguage = await AsyncStorage.getItem("tipsLanguage");
+      const currentDate = new Date().toDateString();
+
+      // Check if we need new tips (different date or language)
+      if (lastFetchDate !== currentDate || cachedLanguage !== currentLanguage) {
+        // Generate new tips
+        const newTips = await generateTips(currentLanguage);
+
+        if (newTips) {
+          // Save new tips and update date
+          await AsyncStorage.setItem("currentTips", JSON.stringify(newTips));
+          await AsyncStorage.setItem("lastTipsFetchDate", currentDate);
+          await AsyncStorage.setItem("tipsLanguage", currentLanguage);
+
+          setTips(newTips);
+        } else {
+          // If generation fails, try to use cached tips
+          const cachedTips = await AsyncStorage.getItem("currentTips");
+          if (cachedTips) {
+            setTips(JSON.parse(cachedTips));
+          }
+        }
+      } else {
+        // Use cached tips
+        const cachedTips = await AsyncStorage.getItem("currentTips");
+        if (cachedTips) {
+          setTips(JSON.parse(cachedTips));
+        } else {
+          // If no cached tips, generate new ones
+          const newTips = await generateTips(currentLanguage);
+          if (newTips) {
+            await AsyncStorage.setItem("currentTips", JSON.stringify(newTips));
+            await AsyncStorage.setItem("lastTipsFetchDate", currentDate);
+            await AsyncStorage.setItem("tipsLanguage", currentLanguage);
+
+            setTips(newTips);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching daily tips:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const randomIndex = Math.floor(Math.random() * dailyThoughts.length);
-    setTodaysThought(dailyThoughts[randomIndex]);
-  }, []);
+    fetchDailyTips();
+  }, [currentLanguage]);
 
   const handleLogout = async () => {
     try {
@@ -92,32 +163,30 @@ export default function ProfileScreen() {
         </View>
       </View>
 
-      {/* Thought of the Day Card */}
-      <View className="mx-4 mt-6 bg-white rounded-xl p-4 shadow">
-        <View className="flex-row items-center mb-2">
-          <Ionicons name="bulb" size={24} color="#F59E0B" />
-          <Text className="text-lg font-bold ml-2 text-gray-800">
-            Thought of the Day
-          </Text>
-        </View>
-        <Text className="text-gray-600 italic">"{todaysThought}"</Text>
-      </View>
-
       {/* Parenting Tips Section */}
-      <View className="mx-4 mt-6 mb-8">
-        <Text className="text-lg font-bold mb-4 text-gray-800">
-          Parenting Tips
-        </Text>
-        {parentingTips.map((tip) => (
-          <View
-            key={tip.id}
-            className="bg-white p-4 rounded-xl mb-3 shadow flex-row items-center"
-          >
-            <MaterialIcons name={tip.icon} size={24} color="#3B82F6" />
-            <Text className="text-gray-700 ml-3 flex-1">{tip.tip}</Text>
-          </View>
-        ))}
-      </View>
+      {loading ? (
+        <View className="items-center justify-center p-4 mt-6">
+          <ActivityIndicator size="large" color="#3B82F6" />
+          <Text className="mt-2 text-gray-600">Loading tips...</Text>
+        </View>
+      ) : (
+        <View className="mx-4 mt-6 mb-8">
+          <Text className="text-lg font-bold mb-4 text-gray-800">
+            Daily Parenting Tips
+          </Text>
+          {tips.map((tip, index) => (
+            <View
+              key={index}
+              className="bg-white p-4 rounded-xl mb-3 shadow flex-row items-center"
+            >
+              <Ionicons name="bulb" size={24} color="#F59E0B" />
+              <Text className="text-gray-700 ml-3 flex-1">{tip.tip}</Text>
+            </View>
+          ))}
+        </View>
+      )}
     </ScrollView>
   );
-}
+};
+
+export default ProfileScreen;

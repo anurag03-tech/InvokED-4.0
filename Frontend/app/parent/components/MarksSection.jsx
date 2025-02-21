@@ -94,7 +94,6 @@ const renderMarksSection = (classroom) => {
             strokeWidth: 2,
           },
         ],
-        legend: ["Your Score %", "Class Average %"],
       };
     } catch (e) {
       return DEFAULT_CHART_DATA;
@@ -107,7 +106,7 @@ const renderMarksSection = (classroom) => {
     <ScrollView className="bg-white rounded-lg p-2" style={{ height: 300 }}>
       {/* Performance Trend Chart - Made more compact */}
       <View className="p-2 bg-white rounded-lg shadow-sm mb-4 border border-slate-400">
-        <Text className="font-bold text-gray-800 mb-2 text-lg">
+        <Text className="font-bold text-gray-800 mb-1 text-lg">
           Performance Trend
         </Text>
         <LineChart
@@ -123,11 +122,11 @@ const renderMarksSection = (classroom) => {
         <View className="flex-row justify-center mt-1">
           <View className="flex-row items-center mr-4">
             <View className="w-3 h-3 bg-blue-600 rounded-full mr-1" />
-            <Text className=" text-gray-600">Your Score</Text>
+            <Text className=" text-gray-600">Your Score %</Text>
           </View>
           <View className="flex-row items-center">
             <View className="w-3 h-3 bg-orange-600 rounded-full mr-1 mt-1" />
-            <Text className=" text-gray-600 mt-1">Class Average</Text>
+            <Text className=" text-gray-600 mt-1">Class Average %</Text>
           </View>
         </View>
       </View>

@@ -7,7 +7,7 @@ const Header = ({ navigation, iconName }) => {
   return (
     <View
       className="flex-row items-center bg-blue-500 px-4"
-      style={{ height: 54 }}
+      style={{ height: 50 }}
     >
       <TouchableOpacity onPress={() => navigation.goBack()} className="mr-2">
         <Icon name="keyboard-backspace" size={24} color="white" />
@@ -31,7 +31,7 @@ const ClassroomLayout = () => {
             <Header navigation={navigation} iconName="class" />
           ),
           headerStyle: {
-            height: 60,
+            height: 50,
           },
           headerTintColor: "white",
         }}
@@ -43,7 +43,7 @@ const ClassroomLayout = () => {
             <Header navigation={navigation} iconName="class" />
           ),
           headerStyle: {
-            height: 60,
+            height: 50,
           },
           headerTintColor: "white",
         }}

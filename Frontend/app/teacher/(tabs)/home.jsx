@@ -74,7 +74,7 @@ export default function HomeScreen() {
           Authorization: `Bearer ${token}`,
         },
       });
-      console.log("Classrooms:", response.data.classrooms);
+      //console.log("Classrooms:", response.data.classrooms);
       setClassrooms(response.data.classrooms);
     } catch (error) {
       console.error("Error fetching classrooms:", error);
@@ -156,7 +156,7 @@ export default function HomeScreen() {
         }
       >
         {/* Improved Header with solid background */}
-        <View className="bg-blue-600 pb-6 rounded-b-3xl shadow-lg">
+        <View className="bg-blue-600 pb-5 rounded-b-3xl shadow-lg">
           <View className="pt-3 px-5">
             <View className="flex-row justify-between items-center mt-2">
               <View>
@@ -210,7 +210,7 @@ export default function HomeScreen() {
 
           {/* Add Classroom Button */}
           <TouchableOpacity
-            className="bg-white mx-5 mt-5 py-3 rounded-xl shadow-md flex-row justify-center items-center border border-blue-100"
+            className="bg-white mx-5 mt-5 py-2 rounded-xl shadow-md flex-row justify-center items-center border border-blue-100"
             onPress={() => setModalVisible(true)}
           >
             <View className="bg-blue-100 p-1 rounded-md mr-2">
@@ -252,7 +252,7 @@ export default function HomeScreen() {
 
           {/* All Classroom Cards - Two columns, rectangular cards */}
           {classrooms.length > 0 && (
-            <View className="flex-row flex-wrap justify-between">
+            <View className="flex-row flex-wrap justify-between gap-2">
               {classrooms.map((classroom, index) => {
                 // Array of light background colors to rotate through
                 const bgColors = [
@@ -300,7 +300,7 @@ export default function HomeScreen() {
                 return (
                   <TouchableOpacity
                     key={classroom._id}
-                    className={`${bgColors[colorIndex]} rounded-xl p-3 ${borderColors[colorIndex]} border mb-3 w-[48%] flex-col`}
+                    className={`${bgColors[colorIndex]} rounded-xl p-3 ${borderColors[colorIndex]} border mb-1 flex-1 min-w-[45%] flex-col`}
                     onPress={() =>
                       router.push({
                         pathname: "../(classroom)",
@@ -310,7 +310,7 @@ export default function HomeScreen() {
                   >
                     {/* Top section - Icon and Class info */}
                     <View className="items-center flex-row justify-between">
-                      <View className="rounded-xl items-center justify-center w-12 h-12">
+                      <View className="rounded-xl items-center justify-center aspect-square w-1/4">
                         <MaterialCommunityIcons
                           name="school"
                           size={34}
@@ -318,15 +318,15 @@ export default function HomeScreen() {
                         />
                       </View>
                       <View className="flex-1 ml-2">
-                        <Text className="text-gray-700 text-lg font-medium">
+                        <Text className="text-gray-700 text-lg font-semibold">
                           Class {classroom.grade}-{classroom.section}
                         </Text>
                       </View>
                     </View>
 
                     {/* Subject section */}
-                    <View className="  mb-2 items-center rounded-lg ">
-                      <Text className="text-xl font-semibold text-gray-800 text-center bg-white px-3 rounded-lg">
+                    <View className="mb-2 items-center">
+                      <Text className="text-xl font-semibold text-gray-800">
                         {classroom.subject}
                       </Text>
                     </View>
@@ -348,28 +348,6 @@ export default function HomeScreen() {
                   </TouchableOpacity>
                 );
               })}
-            </View>
-          )}
-
-          {/* Empty state */}
-          {classrooms.length === 0 && (
-            <View className="items-center justify-center py-12">
-              <MaterialCommunityIcons
-                name="book-open-variant"
-                size={64}
-                color="#9CA3AF"
-              />
-              <Text className="text-gray-500 text-lg mt-4 text-center">
-                No classrooms yet
-              </Text>
-              <TouchableOpacity
-                className="mt-6 bg-blue-600 py-3 px-6 rounded-lg"
-                onPress={() => router.push("../create-classroom")}
-              >
-                <Text className="text-white font-semibold">
-                  Create Your First Classroom
-                </Text>
-              </TouchableOpacity>
             </View>
           )}
         </View>
@@ -394,14 +372,14 @@ export default function HomeScreen() {
       >
         <View className="space-y-4">
           <View>
-            <Text className="font-medium text-gray-700 mb-1">Grade</Text>
+            <Text className="font-medium text-gray-700 mb-1">Class</Text>
             <View className="flex-row items-center border border-gray-300 rounded-lg bg-white overflow-hidden">
               <View className="bg-gray-50 p-3 border-r border-gray-300">
                 <MaterialIcons name="school" size={20} color="#6b7280" />
               </View>
               <TextInput
                 className="p-3 flex-1 bg-white"
-                placeholder="Enter grade (e.g., 8)"
+                placeholder="Enter class (e.g., 8)"
                 value={newClassroom.grade}
                 onChangeText={(text) =>
                   setNewClassroom({ ...newClassroom, grade: text })
