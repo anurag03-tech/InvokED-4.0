@@ -23,7 +23,7 @@
     "android": {
       "package": "com.anurag2003.frontend",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/icon.png",
+        "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
       "permissions": ["RECORD_AUDIO"]
@@ -39,6 +39,14 @@
         "expo-av",
         {
           "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone for audio recording."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#ffffff",
+          "sounds": ["./assets/notification-sound.wav"]
         }
       ]
     ],

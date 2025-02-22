@@ -60,7 +60,7 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
           switch (routeName) {
             case "home":
               return <FontAwesome name="home" size={size + 4} color={color} />;
-            case "learningVideo":
+            case "learning":
               return (
                 <MaterialIcons name="video-library" size={size} color={color} />
               );
@@ -149,6 +149,8 @@ const styles = StyleSheet.create({
 });
 
 const TabsLayout = () => {
+  const { t } = useTranslation();
+
   return (
     <Tabs
       screenOptions={{
@@ -157,10 +159,13 @@ const TabsLayout = () => {
       tabBar={(props) => <CustomTabBar {...props} />}
     >
       <Tabs.Screen name="home" options={{ tabBarLabel: "Home" }} />
-      <Tabs.Screen name="learningVideo" options={{ tabBarLabel: "Learning" }} />
+      <Tabs.Screen name="learning" options={{ tabBarLabel: "Learning" }} />
       <Tabs.Screen name="chatBot" options={{ tabBarLabel: "Chat Bot" }} />
       <Tabs.Screen name="profile" options={{ tabBarLabel: "Profile" }} />
-      <Tabs.Screen name="notifications" options={{ tabBarLabel: "Notif." }} />
+      <Tabs.Screen
+        name="notifications"
+        options={{ tabBarLabel: "Notifications" }}
+      />
     </Tabs>
   );
 };

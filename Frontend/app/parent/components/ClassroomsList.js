@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 
 const CARD_COLORS = [
   {
@@ -29,74 +30,79 @@ const CARD_COLORS = [
   },
 ];
 
-export const ClassroomsList = ({ student, router }) => (
-  <View className="mx-2 mt-2 mb-4">
-    <Text className="text-base font-semibold text-white mb-3 p-1 text-center bg-blue-500 rounded-md">
-      Classrooms
-    </Text>
+export const ClassroomsList = ({ student, router }) => {
+  const { t } = useTranslation();
+  return (
+    <View className="mx-2 mt-2 mb-4">
+      <Text className="text-base font-semibold text-white mb-3 p-1 text-center bg-blue-500 rounded-md">
+        {t("Classrooms")}
+      </Text>
 
-    {student.classrooms?.length > 0 ? (
-      <View className="flex-row flex-wrap gap-2">
-        {student.classrooms.map((classroom, index) => {
-          const colorScheme = CARD_COLORS[index % CARD_COLORS.length];
+      {student.classrooms?.length > 0 ? (
+        <View className="flex-row flex-wrap gap-2">
+          {student.classrooms.map((classroom, index) => {
+            const colorScheme = CARD_COLORS[index % CARD_COLORS.length];
 
-          return (
-            <TouchableOpacity
-              key={classroom._id}
-              className={`w-[48%] ${colorScheme.bg} ${colorScheme.border} rounded-lg p-3`}
-              onPress={() =>
-                router.push({
-                  pathname: "../(classroom)/classroomIndex",
-                  params: {
-                    id: classroom._id,
-                    subject: classroom.subject,
-                    grade: classroom.grade,
-                    section: classroom.section,
-                  },
-                })
-              }
-            >
-              <View>
-                <View className="flex-row items-center justify-between">
-                  <Text
-                    numberOfLines={1}
-                    className={`text-lg font-semibold ${colorScheme.title} flex-1 mr-2`}
-                  >
-                    {classroom.subject}
-                  </Text>
-                  <MaterialIcons
-                    name="chevron-right"
-                    size={20}
-                    color={colorScheme.icon}
-                  />
-                </View>
-
-                {classroom.classTeacher && (
-                  <View
-                    className={`mt-1 px-2 py-0.5 bg-white ${colorScheme.border} rounded-full self-start`}
-                  >
+            return (
+              <TouchableOpacity
+                key={classroom._id}
+                className={`w-[48%] h-32 ${colorScheme.bg} ${colorScheme.border} rounded-lg p-3`}
+                onPress={() =>
+                  router.push({
+                    pathname: "../(classroom)/classroomIndex",
+                    params: {
+                      id: classroom._id,
+                      subject: classroom.subject,
+                      grade: classroom.grade,
+                      section: classroom.section,
+                    },
+                  })
+                }
+              >
+                <View>
+                  <View className="flex-row items-center justify-between">
                     <Text
-                      className={`text-xs font-medium ${colorScheme.title}`}
+                      numberOfLines={1}
+                      className={`text-lg font-semibold ${colorScheme.title} flex-1 mr-2`}
                     >
-                      Class Teacher
+                      {t(classroom.subject)}
                     </Text>
+                    <MaterialIcons
+                      name="chevron-right"
+                      size={20}
+                      color={colorScheme.icon}
+                    />
                   </View>
-                )}
 
-                <Text className=" text-gray-500 mt-0.5 mb-1">
-                  Teacher: {classroom.teacher?.name}
-                </Text>
+                  {classroom.classTeacher && (
+                    <View
+                      className={`mt-1 px-2 py-0.5 bg-white ${colorScheme.border} rounded-full self-start`}
+                    >
+                      <Text
+                        className={`text-xs font-medium ${colorScheme.title}`}
+                      >
+                        {t("Class Teacher")}
+                      </Text>
+                    </View>
+                  )}
 
-                <Text className="text-sm text-gray-600 mt-1">
-                  Class {classroom.grade} - {classroom.section}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-    ) : (
-      <Text className="text-gray-500 italic">No classrooms assigned yet</Text>
-    )}
-  </View>
-);
+                  <Text className=" text-gray-500 mt-2 mb-1">
+                    {t("Teacher")}: {classroom.teacher?.name}
+                  </Text>
+
+                  <Text className="text-sm text-gray-600 ">
+                    {t("Class")} {classroom.grade} - {classroom.section}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      ) : (
+        <Text className="text-gray-500 italic">
+          {t("No classrooms assigned yet")}
+        </Text>
+      )}
+    </View>
+  );
+};

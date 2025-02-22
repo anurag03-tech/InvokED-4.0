@@ -17,37 +17,29 @@ const UseRouteAssistant = () => {
     registerParent: t(
       "Enter your details to create a parent account. If you already have an account, click on Login"
     ),
-    role: t(
-      "Congratulation you have successfully created an account. Please select your role to continue."
-    ),
+    role: t("Let's get started by selecting between 'Parent' and 'Teacher'."),
 
     // Parent routes
     home: t(
-      "Welcome to your dashboard! Here you can manage all parent features and access your child's information."
+      "Welcome to your dashboard! Here, you can view your child's timetable, attendance, and classroom information by clicking on the respective buttons."
     ),
-    profile: t(
-      "Here you can view and edit your profile details, manage preferences and update your information."
-    ),
+    profile: t("You can view your profile details and parenting tips."),
 
     // Parent classroom routes
     classroomIndex: t(
-      "Here you can view your child's classroom information, assignments and progress."
+      "You can view assignments, announcements, marks, and feedback from the teacher."
     ),
     remarks: t(
-      "Here you can view teacher remarks and feedback for your child."
+      "Here you can view teacher remarks and feedback for your child, and send a response"
     ),
 
     // Parent tabs routes
     chatBot: t(
-      "You can chat with our assistant here. It will help you with queries related to your child's education."
+      "You can chat with our assistant here. It will help you with your queries."
     ),
-    learningVideo: t(
-      "Here you can access educational videos for your child's learning journey."
-    ),
-
-    // Additional parent routes from your list
-    classroomIndex: t(
-      "Please verify your details. After verification, click on the checkbox and Submit."
+    learning: t("You can access learning videos and audio content from here"),
+    notifications: t(
+      "You will get all important notifications about announcements and assignments from the teacher here"
     ),
   };
 

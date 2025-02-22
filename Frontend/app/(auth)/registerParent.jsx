@@ -17,6 +17,7 @@ import useDropdown from "./components/useDropdown";
 import * as Notifications from "expo-notifications";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Input } from "~/components/ui/input";
+import { useTranslation } from "react-i18next";
 
 const API_URL = process.env.EXPO_PUBLIC_MY_API_URL;
 const EXPO_PROJECT_ID = process.env.EXPO_PUBLIC_PROJECT_ID;
@@ -24,6 +25,7 @@ const EXPO_PROJECT_ID = process.env.EXPO_PUBLIC_PROJECT_ID;
 const MAX_CHILDREN = 10;
 
 const ParentRegistrationScreen = () => {
+  const { t } = useTranslation();
   const router = useRouter();
   const { login } = useAuth();
 
@@ -44,11 +46,61 @@ const ParentRegistrationScreen = () => {
 
   const schools = useMemo(
     () => [
-      { label: "Delhi Public School", value: "Delhi Public School" },
-      { label: "St. Mary's School", value: "St. Mary's School" },
-      { label: "Modern School", value: "Modern School" },
-      { label: "Ryan International", value: "Ryan International" },
-      { label: "Cambridge International", value: "Cambridge International" },
+      {
+        label: "Kendriya Vidyalaya, RK Puram, Delhi",
+        value: "Kendriya Vidyalaya, RK Puram, Delhi",
+      },
+      {
+        label: "Jawahar Navodaya Vidyalaya, Mumbai, Maharashtra",
+        value: "Jawahar Navodaya Vidyalaya, Mumbai, Maharashtra",
+      },
+      {
+        label: "Government Model School, Bangalore, Karnataka",
+        value: "Government Model School, Bangalore, Karnataka",
+      },
+      {
+        label: "Sarvodaya Vidyalaya, Chennai, Tamil Nadu",
+        value: "Sarvodaya Vidyalaya, Chennai, Tamil Nadu",
+      },
+
+      {
+        label: "Municipal Corporation School, Kolkata, West Bengal",
+        value: "Municipal Corporation School, Kolkata, West Bengal",
+      },
+      {
+        label: "Government Higher Secondary School, Pune, Maharashtra",
+        value: "Government Higher Secondary School, Pune, Maharashtra",
+      },
+      {
+        label: "State Board School, Jaipur, Rajasthan",
+        value: "State Board School, Jaipur, Rajasthan",
+      },
+
+      {
+        label: "Kendriya Vidyalaya, Patna, Bihar",
+        value: "Kendriya Vidyalaya, Patna, Bihar",
+      },
+      {
+        label: "Government Senior Secondary School, Bhopal, Madhya Pradesh",
+        value: "Government Senior Secondary School, Bhopal, Madhya Pradesh",
+      },
+      {
+        label: "Jawahar Navodaya Vidyalaya, Chandigarh",
+        value: "Jawahar Navodaya Vidyalaya, Chandigarh",
+      },
+      {
+        label: "Government Higher Secondary School, Shimla, Himachal Pradesh",
+        value: "Government Higher Secondary School, Shimla, Himachal Pradesh",
+      },
+      {
+        label: "Kendriya Vidyalaya, Ranchi, Jharkhand",
+        value: "Kendriya Vidyalaya, Ranchi, Jharkhand",
+      },
+
+      {
+        label: "Navyug School, Imphal, Manipur",
+        value: "Navyug School, Imphal, Manipur",
+      },
     ],
     []
   );
@@ -110,10 +162,10 @@ const ParentRegistrationScreen = () => {
         schoolDropdownHooks[index];
 
       return (
-        <View key={index} className="w-full mb-6 p-4 bg-gray-50 rounded-lg">
+        <View key={index} className="w-full mb-6 p-2 bg-gray-50 rounded-lg">
           <View className="flex-row justify-between items-center mb-4">
             <Text className="text-lg font-bold text-gray-700">
-              Child {index + 1}
+              {t("Child")} {index + 1}
             </Text>
             {formData.children.length > 1 && (
               <TouchableOpacity
@@ -126,7 +178,9 @@ const ParentRegistrationScreen = () => {
           </View>
 
           <View className="w-full mb-4">
-            <Text className="text-base font-medium mb-1">Child's Name</Text>
+            <Text className="text-base font-medium mb-1">
+              {t("Child's Name")}
+            </Text>
             <Input
               placeholder="Enter child's name"
               value={child.name}
@@ -151,7 +205,9 @@ const ParentRegistrationScreen = () => {
           />
 
           <View className="w-full mb-4">
-            <Text className="text-base font-medium mb-1">Admission Number</Text>
+            <Text className="text-base font-medium mb-1">
+              {t("Admission Number")}
+            </Text>
             <Input
               placeholder="Enter admission number"
               value={child.admissionNumber}
@@ -178,7 +234,7 @@ const ParentRegistrationScreen = () => {
   const renderInputField = useCallback(
     (name, label, options = {}) => (
       <View className="w-full mb-4">
-        <Text className="text-base font-medium mb-1">{label}</Text>
+        <Text className="text-base font-medium mb-1">{t(label)}</Text>
         <Input
           placeholder={`Enter ${label.toLowerCase()}`}
           value={formData[name]}
@@ -305,11 +361,13 @@ const ParentRegistrationScreen = () => {
           />
 
           <Text className="text-3xl font-bold text-blue-600 mb-5">
-            Registration
+            {t("Registration")}
           </Text>
 
           <View className="w-full mb-4">
-            <Text className="text-base font-medium mb-1">I am the child's</Text>
+            <Text className="text-base font-medium mb-1">
+              {t("I am the child's")}
+            </Text>
             <View className="flex-row space-x-4">
               <TouchableOpacity
                 onPress={() => handleChange("relation")("father")}
@@ -327,7 +385,7 @@ const ParentRegistrationScreen = () => {
                       : "text-gray-700"
                   }`}
                 >
-                  Father
+                  {t("Father")}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -346,7 +404,7 @@ const ParentRegistrationScreen = () => {
                       : "text-gray-700"
                   }`}
                 >
-                  Mother
+                  {t("Mother")}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -365,7 +423,7 @@ const ParentRegistrationScreen = () => {
 
           <View className="w-full">
             <Text className="text-lg font-bold text-gray-700 mb-4">
-              Children Information
+              {t("Children Information")}
             </Text>
             {formData.children.map((child, index) =>
               renderChildFields(child, index)
@@ -382,14 +440,14 @@ const ParentRegistrationScreen = () => {
                   color="#2563eb"
                 />
                 <Text className="text-blue-600 font-medium ml-2">
-                  Add Another Child
+                  {t("Add Another Child")}
                 </Text>
               </TouchableOpacity>
             )}
           </View>
 
           {error ? (
-            <Text className="text-red-500 mb-2.5 text-center">{error}</Text>
+            <Text className="text-red-500 mb-2.5 text-center">{t(error)}</Text>
           ) : null}
 
           <TouchableOpacity
@@ -402,7 +460,9 @@ const ParentRegistrationScreen = () => {
             {isLoading ? (
               <ActivityIndicator color="white" />
             ) : (
-              <Text className="text-white text-lg font-bold">Register</Text>
+              <Text className="text-white text-lg font-bold">
+                {t("Register")}
+              </Text>
             )}
           </TouchableOpacity>
 
@@ -412,8 +472,9 @@ const ParentRegistrationScreen = () => {
             disabled={isLoading}
           >
             <Text className="text-base text-gray-600">
-              Already have an account?{" "}
-              <Text className="text-blue-600 font-bold">Login</Text>
+              {t("Already have an account")}
+              {"? "}
+              <Text className="text-blue-600 font-bold">{t("Login")}</Text>
             </Text>
           </TouchableOpacity>
         </View>

@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, TouchableOpacity, ScrollView } from "react-native";
+import { useTranslation } from "react-i18next";
 
 export const ParentDashboardHeader = ({
   user,
@@ -9,6 +10,7 @@ export const ParentDashboardHeader = ({
   setCurrentStudentIndex,
   currentStudent,
 }) => {
+  const { t } = useTranslation();
   return (
     <>
       {/* Student Selector */}
@@ -43,15 +45,17 @@ export const ParentDashboardHeader = ({
         <View className="flex-row justify-between items-center">
           <View>
             <Text className="text-xl font-bold text-white">
-              Welcome, {user?.name}
+              {t("Welcome")}, {user?.name}
             </Text>
             <Text className="text-white mt-1">
-              Viewing: {currentStudent.name}'s Dashboard
+              {t("Viewing")}: {currentStudent.name}'s {t("Dashboard")}
             </Text>
           </View>
           {!isOnline && (
-            <View className="bg-yellow-300 px-2 py-1 rounded-lg">
-              <Text className="text-blue-900 font-semibold ">Offline</Text>
+            <View className="bg-white px-2 py-1 rounded-lg border">
+              <Text className="text-blue-900 font-semibold ">
+                {t("Offline")}
+              </Text>
             </View>
           )}
         </View>

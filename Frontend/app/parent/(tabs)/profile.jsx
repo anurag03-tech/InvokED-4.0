@@ -9,12 +9,14 @@ import {
 } from "react-native";
 import { useAuth } from "../../context/authContext";
 import { useRouter } from "expo-router";
-import { MaterialIcons, Ionicons, Feather } from "@expo/vector-icons";
+import { Ionicons, Feather } from "@expo/vector-icons";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import i18n from "i18next";
+import { useTranslation } from "react-i18next";
 
 const ProfileScreen = () => {
+  const { t } = useTranslation();
   const { user, logout } = useAuth();
   const router = useRouter();
   const [tips, setTips] = useState([]);
@@ -141,7 +143,7 @@ const ProfileScreen = () => {
             className="flex-row items-center bg-red-500 px-4 py-2 rounded-full"
           >
             <Feather name="log-out" size={18} color="white" />
-            <Text className="text-white ml-2 font-medium">Logout</Text>
+            <Text className="text-white ml-2 font-medium">{t("Logout")}</Text>
           </TouchableOpacity>
         </View>
 
@@ -167,12 +169,12 @@ const ProfileScreen = () => {
       {loading ? (
         <View className="items-center justify-center p-4 mt-6">
           <ActivityIndicator size="large" color="#3B82F6" />
-          <Text className="mt-2 text-gray-600">Loading tips...</Text>
+          <Text className="mt-2 text-gray-600">{t("Loading tips...")}</Text>
         </View>
       ) : (
         <View className="mx-4 mt-6 mb-8">
           <Text className="text-lg font-bold mb-4 text-gray-800">
-            Daily Parenting Tips
+            {t("Daily Parenting Tips")}
           </Text>
           {tips.map((tip, index) => (
             <View

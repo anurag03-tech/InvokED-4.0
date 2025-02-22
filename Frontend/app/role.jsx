@@ -9,6 +9,7 @@ import React, { useState } from "react";
 import { Button } from "~/components/ui/button";
 import { useRouter } from "expo-router";
 import { useAuth } from "./context/authContext";
+import { useTranslation } from "react-i18next";
 
 const CustomButton = ({
   onPress,
@@ -16,6 +17,7 @@ const CustomButton = ({
   image,
   variant = "outline",
   className,
+  t,
 }) => (
   <TouchableOpacity
     onPress={onPress}
@@ -44,7 +46,7 @@ const CustomButton = ({
           ${variant === "outline" ? "text-blue-600" : "text-white"}
         `}
       >
-        {title}
+        {t(title)}
       </Text>
       <Text
         className={`
@@ -52,13 +54,16 @@ const CustomButton = ({
           ${variant === "outline" ? "text-gray-600" : "text-white"}
         `}
       >
-        {variant === "outline" ? "Click to select this role" : "Role selected"}
+        {t(
+          variant === "outline" ? "Click to select this role" : "Role selected"
+        )}
       </Text>
     </View>
   </TouchableOpacity>
 );
 
 const Role = () => {
+  const { t } = useTranslation();
   const [selectedRole, setSelectedRole] = useState(null);
   const router = useRouter();
   const { setUserRole } = useAuth();
@@ -85,10 +90,10 @@ const Role = () => {
         {/* Header Section */}
         <View className="items-center">
           <Text className="text-4xl font-extrabold text-blue-600 mb-4 tracking-tighter">
-            Get Started
+            {t("Get Started")}
           </Text>
           <Text className="text-lg font-medium text-gray-600 text-center mb-12">
-            Let's make learning engaging together
+            {t("Let's make learning engaging together")}
           </Text>
         </View>
 
@@ -101,6 +106,7 @@ const Role = () => {
               variant={selectedRole === "teacher" ? "default" : "outline"}
               onPress={() => handleRoleSelection("teacher")}
               className="w-full"
+              t={t}
             />
             <CustomButton
               title="Parent"
@@ -108,13 +114,14 @@ const Role = () => {
               variant={selectedRole === "parent" ? "default" : "outline"}
               onPress={() => handleRoleSelection("parent")}
               className="w-full"
+              t={t}
             />
           </View>
 
           {selectedRole && (
             <Text className="text-lg text-blue-600 mt-6 font-semibold text-center">
-              Selected:{" "}
-              {selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1)}
+              {t("Selected")}:{" "}
+              {t(selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1))}
             </Text>
           )}
         </View>
@@ -128,7 +135,7 @@ const Role = () => {
             disabled={!selectedRole}
             className="mt-4 mb-5 w-11/12 bg-blue-500 active:bg-blue-400 disabled:opacity-50 rounded-md"
           >
-            <Text className="text-white font-bold text-lg">Next</Text>
+            <Text className="text-white font-bold text-lg">{t("Next")}</Text>
           </Button>
         </View>
       </View>

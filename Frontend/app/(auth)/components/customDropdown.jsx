@@ -75,12 +75,12 @@ const CustomDropdown = ({
         className="overflow-hidden"
       >
         <View className="border border-gray-200 rounded-md bg-white mt-1 shadow-sm">
-          <ScrollView nestedScrollEnabled bounces={false} className="max-h-48">
+          <ScrollView nestedScrollEnabled bounces={false} className="max-h-48 ">
             {options.map((option) => (
               <Pressable
                 key={option.value}
                 onPress={() => handleSelect(option)}
-                className={`px-4 py-3 flex-row justify-between items-center border-b border-gray-50 active:bg-gray-50
+                className={`px-4 py-3 flex-row justify-between items-center  border-b border-gray-400 active:bg-gray-50
                   ${value === option.value ? "bg-blue-50" : ""}`}
               >
                 <Text

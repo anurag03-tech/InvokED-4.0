@@ -1,514 +1,3 @@
-// import React, { useState, useEffect, useRef } from "react";
-// import {
-//   View,
-//   Text,
-//   FlatList,
-//   TouchableOpacity,
-//   TextInput,
-//   ActivityIndicator,
-//   Alert,
-//   Keyboard,
-//   SafeAreaView,
-// } from "react-native";
-// import { Audio } from "expo-av";
-// import { MaterialIcons } from "@expo/vector-icons";
-// import axios from "axios";
-// import * as FileSystem from "expo-file-system";
-// import { useLocalSearchParams, useRouter } from "expo-router";
-// import { useAuth } from "../../context/authContext";
-
-// const API_URL = process.env.EXPO_PUBLIC_MY_API_URL;
-
-// const ParentRemark = () => {
-//   const params = useLocalSearchParams();
-//   const router = useRouter();
-//   const { token } = useAuth();
-//   const soundRef = useRef(null);
-
-//   const [loading, setLoading] = useState(true);
-//   const [sending, setSending] = useState(false);
-//   const [textMessage, setTextMessage] = useState("");
-//   const [remarks, setRemarks] = useState([]);
-//   const [recording, setRecording] = useState(null);
-//   const [isRecording, setIsRecording] = useState(false);
-//   const [student, setStudent] = useState(null);
-//   const [classroom, setClassroom] = useState(null);
-
-//   // Cleanup function
-//   useEffect(() => {
-//     return () => {
-//       if (soundRef.current) {
-//         soundRef.current.unloadAsync();
-//       }
-//     };
-//   }, []);
-
-//   // Fetch remarks on component mount
-//   useEffect(() => {
-//     if (token && params.id) {
-//       fetchRemarks();
-//     }
-//   }, [token, params.id]);
-
-//   const stopAudio = async () => {
-//     try {
-//       if (soundRef.current) {
-//         await soundRef.current.stopAsync().catch(() => {});
-//         await soundRef.current.unloadAsync().catch(() => {});
-//         soundRef.current = null;
-//       }
-//     } catch (error) {
-//       console.error("Stop audio error:", error);
-//     }
-//   };
-
-//   const fetchRemarks = async () => {
-//     if (!params.id) {
-//       console.error("No classroom ID provided");
-//       return;
-//     }
-
-//     try {
-//       setLoading(true);
-//       console.log(`Fetching remarks for classroom ${params.id}`);
-
-//       const response = await axios.get(
-//         `${API_URL}/api/parent/classroom/${params.id}/remarks`,
-//         {
-//           headers: {
-//             Authorization: `Bearer ${token}`,
-//           },
-//         }
-//       );
-
-//       if (response.data.success) {
-//         console.log("Remarks fetched successfully");
-
-//         if (response.data.remark) {
-//           // Sort messages by date (oldest first)
-//           const sortedMessages = [
-//             ...(response.data.remark.messages || []),
-//           ].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-//           setRemarks(sortedMessages);
-//         } else {
-//           setRemarks([]);
-//         }
-
-//         // Store student info
-//         if (response.data.student) {
-//           setStudent(response.data.student);
-//         }
-
-//         // Get classroom details if needed
-//         if (params.subject) {
-//           setClassroom({
-//             subject: params.subject,
-//             grade: params.grade,
-//             section: params.section,
-//           });
-//         } else {
-//           // Fetch classroom details if not provided in params
-//           fetchClassroomDetails();
-//         }
-//       } else {
-//         console.warn("Failed to fetch remarks:", response.data.message);
-//         Alert.alert("Error", response.data.message || "Failed to load remarks");
-//       }
-//     } catch (error) {
-//       console.error("Error fetching remarks:", error);
-//       Alert.alert("Error", "Failed to fetch remarks. Please try again later.");
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   const fetchClassroomDetails = async () => {
-//     try {
-//       const response = await axios.get(
-//         `${API_URL}/api/parent/classroom/${params.id}`,
-//         {
-//           headers: {
-//             Authorization: `Bearer ${token}`,
-//           },
-//         }
-//       );
-
-//       if (response.data.success && response.data.classroom) {
-//         setClassroom({
-//           subject: response.data.classroom.subject,
-//           grade: response.data.classroom.grade,
-//           section: response.data.classroom.section,
-//           teacher: response.data.classroom.teacher,
-//         });
-//       }
-//     } catch (error) {
-//       console.error("Error fetching classroom details:", error);
-//     }
-//   };
-
-//   const playVoiceMessage = async (content) => {
-//     try {
-//       // Stop any currently playing audio
-//       await stopAudio();
-
-//       // Check if the content is a base64 data URI
-//       if (content.startsWith("data:audio")) {
-//         // Create a temporary file for playback
-//         const tempFilePath =
-//           FileSystem.cacheDirectory + `temp_audio_${Date.now()}.m4a`;
-
-//         // Extract the base64 part from the data URI
-//         const base64Data = content.split(",")[1];
-
-//         // Write base64 to temporary file
-//         await FileSystem.writeAsStringAsync(tempFilePath, base64Data, {
-//           encoding: FileSystem.EncodingType.Base64,
-//         });
-
-//         console.log("Playing from temp file:", tempFilePath);
-//         const { sound: newSound } = await Audio.Sound.createAsync({
-//           uri: tempFilePath,
-//         });
-//         soundRef.current = newSound;
-
-//         // Set up cleanup after playing
-//         newSound.setOnPlaybackStatusUpdate((status) => {
-//           if (status.didJustFinish) {
-//             // Delete temp file after playback
-//             FileSystem.deleteAsync(tempFilePath, { idempotent: true }).catch(
-//               (err) => console.log("Error cleaning temp audio:", err)
-//             );
-//           }
-//         });
-
-//         await newSound.playAsync();
-//       }
-//       // For backward compatibility - handle existing URL-based content
-//       else {
-//         const { sound: newSound } = await Audio.Sound.createAsync({
-//           uri: content,
-//         });
-//         soundRef.current = newSound;
-//         await newSound.playAsync();
-//       }
-//     } catch (error) {
-//       console.error("Error playing voice message:", error);
-//       Alert.alert("Error", "Failed to play voice message");
-//     }
-//   };
-
-//   async function startRecording() {
-//     try {
-//       const permission = await Audio.requestPermissionsAsync();
-//       if (permission.status !== "granted") {
-//         Alert.alert("Permission Denied", "Please allow microphone access");
-//         return;
-//       }
-
-//       await Audio.setAudioModeAsync({
-//         allowsRecordingIOS: true,
-//         playsInSilentModeIOS: true,
-//       });
-
-//       const { recording } = await Audio.Recording.createAsync(
-//         Audio.RecordingOptionsPresets.HIGH_QUALITY
-//       );
-//       setRecording(recording);
-//       setIsRecording(true);
-//     } catch (err) {
-//       console.error("Error starting recording:", err);
-//       Alert.alert("Error", "Failed to start recording");
-//     }
-//   }
-
-//   async function stopRecording() {
-//     try {
-//       if (!recording) return;
-
-//       await recording.stopAndUnloadAsync();
-//       const uri = recording.getURI();
-//       setRecording(null);
-//       setIsRecording(false);
-
-//       if (uri) {
-//         await uploadVoiceMessage(uri);
-//       } else {
-//         throw new Error("Failed to get recording URI");
-//       }
-//     } catch (err) {
-//       console.error("Recording error:", err.message);
-//       Alert.alert("Error", "Failed to process recording");
-//     }
-//   }
-
-//   const uploadVoiceMessage = async (uri) => {
-//     if (!params.id) {
-//       Alert.alert("Error", "Missing classroom information");
-//       return;
-//     }
-
-//     try {
-//       setSending(true);
-
-//       // Get file info
-//       const fileInfo = await FileSystem.getInfoAsync(uri);
-//       console.log("File info:", fileInfo);
-
-//       // Simple approach: read the file as base64 first
-//       const base64Audio = await FileSystem.readAsStringAsync(uri, {
-//         encoding: FileSystem.EncodingType.Base64,
-//       });
-
-//       // Then use standard JSON for the request instead of FormData
-//       const response = await axios.post(
-//         `${API_URL}/api/parent/classroom/${params.id}/reply`,
-//         {
-//           type: "voice",
-//           content: base64Audio,
-//           mimeType: "audio/m4a",
-//         },
-//         {
-//           headers: {
-//             Authorization: `Bearer ${token}`,
-//             "Content-Type": "application/json",
-//           },
-//         }
-//       );
-
-//       if (response.data.success) {
-//         console.log("Voice message sent successfully");
-
-//         // Add the new message locally
-//         if (response.data.remark && response.data.remark.messages) {
-//           const newMessage =
-//             response.data.remark.messages[
-//               response.data.remark.messages.length - 1
-//             ];
-//           setRemarks((prevRemarks) => [...prevRemarks, newMessage]);
-//         } else {
-//           // Fallback to re-fetching
-//           fetchRemarks();
-//         }
-//       } else {
-//         throw new Error(
-//           response.data.message || "Unknown error sending voice message"
-//         );
-//       }
-//     } catch (error) {
-//       console.error("Upload error:", error);
-//       console.error("Error details:", error.response?.data || error.message);
-//       Alert.alert("Error", "Failed to send voice message. Please try again.");
-//     } finally {
-//       setSending(false);
-//     }
-//   };
-
-//   const sendTextMessage = async () => {
-//     if (!textMessage.trim() || !params.id) return;
-
-//     Keyboard.dismiss();
-//     try {
-//       setSending(true);
-
-//       const response = await axios.post(
-//         `${API_URL}/api/parent/classroom/${params.id}/reply`,
-//         {
-//           type: "text",
-//           content: textMessage.trim(),
-//         },
-//         {
-//           headers: {
-//             Authorization: `Bearer ${token}`,
-//             "Content-Type": "application/json",
-//           },
-//         }
-//       );
-
-//       if (response.data.success) {
-//         console.log("Message sent successfully");
-
-//         // Optimistic update - add the new message locally
-//         const messageContent = textMessage.trim();
-//         setTextMessage("");
-
-//         if (response.data.remark && response.data.remark.messages) {
-//           const newMessage =
-//             response.data.remark.messages[
-//               response.data.remark.messages.length - 1
-//             ];
-//           setRemarks((prevRemarks) => [...prevRemarks, newMessage]);
-//         } else {
-//           // Create an optimistic message if we can't get it from response
-//           const optimisticMessage = {
-//             _id: `temp-${Date.now()}`,
-//             type: "text",
-//             content: messageContent,
-//             sender: "parent",
-//             createdAt: new Date().toISOString(),
-//           };
-//           setRemarks((prevRemarks) => [...prevRemarks, optimisticMessage]);
-//         }
-//       } else {
-//         throw new Error(response.data.message || "Failed to send message");
-//       }
-//     } catch (error) {
-//       console.error(
-//         "Error sending message:",
-//         error.response?.data || error.message
-//       );
-//       Alert.alert(
-//         "Error",
-//         error.response?.data?.message || "Failed to send message"
-//       );
-//     } finally {
-//       setSending(false);
-//     }
-//   };
-
-//   const renderMessage = ({ item }) => (
-//     <View
-//       className={`px-4 py-3 mb-3 rounded-lg max-w-3/4
-//       ${
-//         item.sender === "parent"
-//           ? "bg-blue-500 self-end"
-//           : "bg-gray-200 self-start"
-//       }`}
-//     >
-//       <Text
-//         className={`text-base ${
-//           item.sender === "parent" ? "text-white" : "text-black"
-//         }`}
-//       >
-//         {item.type === "text" ? item.content : "Voice Message"}
-//       </Text>
-
-//       {item.type === "voice" && (
-//         <TouchableOpacity
-//           className="flex-row items-center mt-2"
-//           onPress={() => playVoiceMessage(item.content)}
-//         >
-//           <MaterialIcons
-//             name="play-circle-filled"
-//             size={22}
-//             color={item.sender === "parent" ? "white" : "black"}
-//           />
-//           <Text
-//             className={`ml-1 ${
-//               item.sender === "parent" ? "text-white" : "text-black"
-//             }`}
-//           >
-//             Play
-//           </Text>
-//         </TouchableOpacity>
-//       )}
-
-//       <Text
-//         className={`text-xs mt-1
-//         ${
-//           item.sender === "parent" ? "text-white opacity-70" : "text-gray-500"
-//         }`}
-//       >
-//         {new Date(item.createdAt).toLocaleTimeString()}
-//       </Text>
-//     </View>
-//   );
-
-//   if (loading) {
-//     return (
-//       <View className="flex-1 justify-center items-center">
-//         <ActivityIndicator size="large" color="#0066cc" />
-//       </View>
-//     );
-//   }
-
-//   return (
-//     <SafeAreaView className="flex-1 bg-gray-100">
-//       {/* Header */}
-//       <View className="bg-blue-600 p-4">
-//         <Text className="text-xl font-bold text-white">Teacher Remarks</Text>
-//         {classroom && (
-//           <>
-//             <Text className="text-white mt-1">
-//               {classroom.subject} - Grade {classroom.grade} {classroom.section}
-//             </Text>
-//             {classroom.teacher && (
-//               <Text className="text-white mt-1">
-//                 Teacher: {classroom.teacher.name}
-//               </Text>
-//             )}
-//           </>
-//         )}
-//         {student && (
-//           <Text className="text-white mt-1">Student: {student.name}</Text>
-//         )}
-//       </View>
-
-//       {/* Messages List */}
-//       <FlatList
-//         data={remarks}
-//         renderItem={renderMessage}
-//         keyExtractor={(item) => item._id || `${item.createdAt}-${item.type}`}
-//         contentContainerClassName="p-4 pb-2"
-//         inverted={false}
-//         ListEmptyComponent={
-//           <View className="flex items-center justify-center py-8">
-//             <Text className="text-gray-500">No messages yet</Text>
-//             <Text className="text-gray-500 mt-2">
-//               You'll be notified when the teacher sends a remark
-//             </Text>
-//           </View>
-//         }
-//         ListFooterComponent={<View className="h-4" />} // Add padding at bottom
-//       />
-
-//       {/* Input Area */}
-//       <View className="p-3 border-t border-gray-200 bg-white">
-//         <View className="flex-row items-center">
-//           <TextInput
-//             className="flex-1 bg-gray-100 rounded-full px-4 py-4 mr-2"
-//             value={textMessage}
-//             onChangeText={setTextMessage}
-//             placeholder="Type a message..."
-//             multiline
-//             editable={!sending}
-//           />
-
-//           <TouchableOpacity
-//             onPress={isRecording ? stopRecording : startRecording}
-//             className={`p-3 rounded-full mr-2
-//               ${isRecording ? "bg-red-500" : "bg-blue-500"}`}
-//             disabled={sending}
-//           >
-//             <MaterialIcons
-//               name={isRecording ? "stop" : "mic"}
-//               size={24}
-//               color="white"
-//             />
-//           </TouchableOpacity>
-
-//           {textMessage.trim() && (
-//             <TouchableOpacity
-//               onPress={sendTextMessage}
-//               className={`p-3 rounded-full ${
-//                 sending ? "bg-gray-400" : "bg-blue-500"
-//               }`}
-//               disabled={sending}
-//             >
-//               {sending ? (
-//                 <ActivityIndicator size="small" color="white" />
-//               ) : (
-//                 <MaterialIcons name="send" size={24} color="white" />
-//               )}
-//             </TouchableOpacity>
-//           )}
-//         </View>
-//       </View>
-//     </SafeAreaView>
-//   );
-// };
-
-// export default ParentRemark;
-
 import React, { useState, useEffect, useRef, useCallback, memo } from "react";
 import {
   View,
@@ -529,6 +18,7 @@ import axios from "axios";
 import * as FileSystem from "expo-file-system";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useAuth } from "../../context/authContext";
+import { useTranslation } from "react-i18next";
 
 const API_URL = process.env.EXPO_PUBLIC_MY_API_URL;
 
@@ -538,7 +28,7 @@ const MessageBubble = memo(
     const isThisPlaying = currentlyPlaying === message._id;
     const isPaused = isThisPlaying && playbackState === "paused";
     const isActive = isThisPlaying && playbackState === "playing";
-
+    const { t } = useTranslation();
     // Choose the appropriate icon based on playback state
     const getPlaybackIcon = () => {
       if (isActive) return "pause-circle-filled";
@@ -567,7 +57,7 @@ const MessageBubble = memo(
             message.sender === "parent" ? "text-white" : "text-black"
           }`}
         >
-          {message.type === "text" ? message.content : "Voice Message"}
+          {t(message.type === "text" ? message.content : "Voice Message")}
         </Text>
 
         {message.type === "voice" && (
@@ -585,7 +75,7 @@ const MessageBubble = memo(
                 message.sender === "parent" ? "text-white" : "text-black"
               }`}
             >
-              {getPlaybackText()}
+              {t(getPlaybackText())}
             </Text>
           </TouchableOpacity>
         )}
@@ -648,6 +138,7 @@ const MessageGroup = memo(
 );
 
 const ParentRemark = () => {
+  const { t } = useTranslation();
   const params = useLocalSearchParams();
   const router = useRouter();
   const { token } = useAuth();
@@ -843,122 +334,6 @@ const ParentRemark = () => {
       console.error("Error fetching classroom details:", error);
     }
   }, [params.id, token]);
-
-  // const playVoiceMessage = useCallback(
-  //   async (content, messageId) => {
-  //     try {
-  //       // Check if we're trying to control the currently playing message
-  //       if (currentlyPlaying === messageId && soundRef.current) {
-  //         // Get the current status of the sound
-  //         const status = await soundRef.current.getStatusAsync();
-
-  //         if (status.isPlaying) {
-  //           // If it's currently playing, pause it
-  //           console.log("Pausing current audio");
-  //           await soundRef.current.pauseAsync();
-  //           setPlaybackState("paused");
-  //           return; // Keep currentlyPlaying set so we know what's paused
-  //         } else if (status.isLoaded && !status.isPlaying) {
-  //           // If it's paused, resume playback
-  //           console.log("Resuming paused audio");
-  //           await soundRef.current.playAsync();
-  //           setPlaybackState("playing");
-  //           return; // Exit early, keeping the same sound loaded
-  //         }
-  //         // If it's not playing or paused (e.g., finished), we'll reload it below
-  //       }
-
-  //       // If we're playing a different message, stop any current playback
-  //       if (soundRef.current) {
-  //         console.log("Stopping previous audio");
-  //         await soundRef.current.stopAsync().catch(() => {});
-  //         await soundRef.current.unloadAsync().catch(() => {});
-  //         soundRef.current = null;
-
-  //         // If we're switching to a different message, update the playing state
-  //         if (currentlyPlaying !== messageId) {
-  //           setCurrentlyPlaying(messageId);
-  //           setPlaybackState("playing");
-  //         } else {
-  //           // If we're toggling the same message and it wasn't paused above,
-  //           // it means playback finished, so reset the playing state
-  //           setCurrentlyPlaying(null);
-  //           setPlaybackState("stopped");
-  //           return;
-  //         }
-  //       } else {
-  //         // No sound was playing, set this as the current message
-  //         setCurrentlyPlaying(messageId);
-  //         setPlaybackState("playing");
-  //       }
-
-  //       // Check if the content is a base64 data URI
-  //       if (content.startsWith("data:audio")) {
-  //         // Create a temporary file for playback
-  //         const tempFilePath =
-  //           FileSystem.cacheDirectory + `temp_audio_${Date.now()}.m4a`;
-
-  //         // Extract the base64 part from the data URI
-  //         const base64Data = content.split(",")[1];
-
-  //         // Write base64 to temporary file
-  //         await FileSystem.writeAsStringAsync(tempFilePath, base64Data, {
-  //           encoding: FileSystem.EncodingType.Base64,
-  //         });
-
-  //         console.log("Loading audio from temp file:", tempFilePath);
-  //         const { sound: newSound } = await Audio.Sound.createAsync(
-  //           { uri: tempFilePath },
-  //           { progressUpdateIntervalMillis: 100 }
-  //         );
-  //         soundRef.current = newSound;
-
-  //         // Set up cleanup after playing
-  //         newSound.setOnPlaybackStatusUpdate((status) => {
-  //           if (status.didJustFinish) {
-  //             // Reset currently playing when finished
-  //             console.log("Playback finished");
-  //             setCurrentlyPlaying(null);
-  //             setPlaybackState("stopped");
-
-  //             // Delete temp file after playback
-  //             FileSystem.deleteAsync(tempFilePath, { idempotent: true }).catch(
-  //               (err) => console.log("Error cleaning temp audio:", err)
-  //             );
-  //           }
-  //         });
-
-  //         await newSound.playAsync();
-  //       }
-  //       // For backward compatibility - handle existing URL-based content
-  //       else {
-  //         const { sound: newSound } = await Audio.Sound.createAsync(
-  //           { uri: content },
-  //           { progressUpdateIntervalMillis: 100 }
-  //         );
-  //         soundRef.current = newSound;
-
-  //         // Set up status monitoring
-  //         newSound.setOnPlaybackStatusUpdate((status) => {
-  //           if (status.didJustFinish) {
-  //             // Reset currently playing when finished
-  //             console.log("Playback finished");
-  //             setCurrentlyPlaying(null);
-  //             setPlaybackState("stopped");
-  //           }
-  //         });
-
-  //         await newSound.playAsync();
-  //       }
-  //     } catch (error) {
-  //       console.error("Error playing voice message:", error);
-  //       Alert.alert("Error", "Failed to play voice message");
-  //       setCurrentlyPlaying(null);
-  //       setPlaybackState("stopped");
-  //     }
-  //   },
-  //   [currentlyPlaying, playbackState]
-  // );
 
   const playVoiceMessage = useCallback(
     async (content, messageId) => {
@@ -1180,7 +555,7 @@ const ParentRemark = () => {
     if (!textMessage.trim() || !params.id) return;
 
     const messageToSend = textMessage.trim();
-    setTextMessage(""); // Clear text immediately for better UX
+    setTextMessage("");
     Keyboard.dismiss();
 
     try {
@@ -1294,7 +669,7 @@ const ParentRemark = () => {
       return (
         <View className="flex items-center justify-center py-8">
           <ActivityIndicator size="small" color="#0066cc" />
-          <Text className="text-gray-500 mt-3">Loading messages...</Text>
+          <Text className="text-gray-500 mt-3">{t("Loading messages")}...</Text>
         </View>
       );
     }
@@ -1302,7 +677,7 @@ const ParentRemark = () => {
     if (groupedRemarks?.length === 0) {
       return (
         <View className="flex items-center justify-center py-8">
-          <Text className="text-gray-500">No messages yet</Text>
+          <Text className="text-gray-500">{t("No messages yet")}</Text>
         </View>
       );
     }
@@ -1353,10 +728,12 @@ const ParentRemark = () => {
       <SafeAreaView className="flex-1 bg-gray-100">
         {/* Header */}
         <View className="bg-blue-600 p-4">
-          <Text className="text-xl font-bold text-white">Teacher Remarks</Text>
+          <Text className="text-xl font-bold text-white">
+            {t("Teacher Remarks")}
+          </Text>
           {classroom && (
             <Text className="text-white mt-1">
-              Subject : {classroom.subject}
+              {t("Subject")} : {classroom.subject}
             </Text>
           )}
         </View>

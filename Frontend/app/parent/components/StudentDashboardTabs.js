@@ -9,8 +9,9 @@ import {
 import { MaterialIcons, FontAwesome5 } from "@expo/vector-icons";
 import { useState, useEffect } from "react";
 import { AttendanceSkeleton } from "./AttendanceSkeleton";
+import { useTranslation } from "react-i18next";
 
-const TabButton = ({ title, icon, isActive, onPress }) => (
+const TabButton = ({ title, icon, isActive, onPress, t }) => (
   <TouchableOpacity
     onPress={onPress}
     style={Platform.select({
@@ -21,20 +22,18 @@ const TabButton = ({ title, icon, isActive, onPress }) => (
       isActive ? "bg-blue-500" : "bg-blue-50"
     }`}
   >
-    <View className="flex-row items-center justify-center gap-2 ">
+    <View className="flex-row items-center justify-center gap-2">
       {icon}
       <Text
-        className={` ${
-          isActive ? "text-white font-semibold" : "text-blue-600"
-        }`}
+        className={`${isActive ? "text-white font-semibold" : "text-blue-600"}`}
       >
-        {title}
+        {t(title)}
       </Text>
     </View>
   </TouchableOpacity>
 );
 
-const AttendanceChartSection = ({ student }) => {
+const AttendanceChartSection = ({ student, t }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [attendanceData, setAttendanceData] = useState(null);
 
@@ -98,7 +97,9 @@ const AttendanceChartSection = ({ student }) => {
   if (!attendanceData && !isLoading) {
     return (
       <View className="items-center justify-center p-8">
-        <Text className="text-gray-500">No attendance data available</Text>
+        <Text className="text-gray-500">
+          {t("No attendance data available")}
+        </Text>
       </View>
     );
   }
@@ -113,9 +114,9 @@ const AttendanceChartSection = ({ student }) => {
   return (
     <ScrollView className="space-y-2">
       {/* Attendance Progress */}
-      <View className=" p-2 rounded-xl">
+      <View className="p-2 rounded-xl">
         <Text className="text-base font-medium text-gray-800 mb-2">
-          Attendance Progress
+          {t("Attendance Progress")}
         </Text>
         <View className="h-3 rounded-full overflow-hidden bg-gray-200">
           <View
@@ -130,31 +131,31 @@ const AttendanceChartSection = ({ student }) => {
       </View>
 
       {/* Summary Cards */}
-      <View className="flex-row justify-between space-x-3 gap-2 ">
+      <View className="flex-row justify-between space-x-3 gap-2">
         <View className="flex-1 bg-blue-100 py-2 px-4 rounded-xl">
           <Text className="text-blue-700 text-base font-medium">
-            Present Days
+            {t("Present Days")}
           </Text>
           <Text className="text-xl font-bold text-blue-700">{presentDays}</Text>
           <Text className="text-black mt-1 text-sm">
-            {attendancePercentage.toFixed(1)}% Present
+            {attendancePercentage.toFixed(1)}% {t("Present")}
           </Text>
         </View>
         <View className="flex-1 bg-red-100 py-2 px-4 rounded-xl">
           <Text className="text-red-700 text-base font-medium">
-            Absent Days
+            {t("Absent Days")}
           </Text>
           <Text className="text-xl font-bold text-red-700">{absentDays}</Text>
           <Text className="text-red-600 mt-1 text-sm">
-            {(100 - attendancePercentage).toFixed(1)}% Absence
+            {(100 - attendancePercentage).toFixed(1)}% {t("Absence")}
           </Text>
         </View>
       </View>
 
       {/* Date Status Strip */}
-      <View className=" rounded-xl py-1">
+      <View className="rounded-xl py-1">
         <Text className="text-base font-medium text-gray-800 mb-1">
-          Daily Attendance
+          {t("Daily Attendance")}
         </Text>
         <ScrollView
           horizontal
@@ -178,7 +179,7 @@ const AttendanceChartSection = ({ student }) => {
                   {month}
                 </Text>
                 <Text
-                  className={` font-bold ${
+                  className={`font-bold ${
                     isPresent ? "text-blue-600" : "text-red-600"
                   }`}
                 >
@@ -190,7 +191,7 @@ const AttendanceChartSection = ({ student }) => {
                     isPresent ? "text-blue-600" : "text-red-600"
                   }`}
                 >
-                  {isPresent ? "Present" : "Absent"}
+                  {t(isPresent ? "Present" : "Absent")}
                 </Text>
               </View>
             );
@@ -207,6 +208,7 @@ export const StudentDashboardTabs = ({
   setActiveTab,
   renderTimetableTab,
 }) => {
+  const { t } = useTranslation();
   const classTeacherRoom = student.classrooms.find(
     (classroom) => classroom.classTeacher
   );
@@ -214,8 +216,8 @@ export const StudentDashboardTabs = ({
   return (
     <View className="flex-1 bg-gray-50">
       {classTeacherRoom && (
-        <View className="flex-row gap-2 p-3 ">
-          <View className="flex-1 flex-row items-center bg-white rounded-lg p-2 ">
+        <View className="flex-row gap-2 p-3">
+          <View className="flex-1 flex-row items-center bg-white rounded-lg p-2">
             <View className="bg-blue-100 p-2 rounded-md">
               <FontAwesome5
                 name="chalkboard-teacher"
@@ -223,29 +225,32 @@ export const StudentDashboardTabs = ({
                 color="#2563eb"
               />
             </View>
-            <View className="ml-3 flex-1 ">
-              <Text className=" text-blue-600 font-medium">Class Teacher</Text>
+            <View className="ml-3 flex-1">
+              <Text className="text-blue-600 font-medium">
+                {t("Class Teacher")}
+              </Text>
               <Text className="text-gray-900 flex-wrap">
                 {classTeacherRoom.teacher?.name}
               </Text>
             </View>
           </View>
 
-          <View className=" w-1/2 flex-row items-center bg-white rounded-lg p-2 ">
+          <View className="w-1/2 flex-row items-center bg-white rounded-lg p-2">
             <View className="bg-blue-100 p-2 rounded-md">
               <MaterialIcons name="meeting-room" size={16} color="#2563eb" />
             </View>
             <View className="ml-3 flex-1">
-              <Text className=" text-blue-600 font-medium">
-                Class - {classTeacherRoom.grade}
+              <Text className="text-blue-600 font-medium">
+                {t("Class")} - {classTeacherRoom.grade}
               </Text>
               <Text className="text-gray-900">
-                Section - {classTeacherRoom.section}
+                {t("Section")} - {classTeacherRoom.section}
               </Text>
             </View>
           </View>
         </View>
       )}
+
       <View className="flex-row px-2 py-1">
         <TabButton
           title="Timetable"
@@ -258,6 +263,7 @@ export const StudentDashboardTabs = ({
           }
           isActive={activeTab === "timetable"}
           onPress={() => setActiveTab("timetable")}
+          t={t}
         />
         <TabButton
           title="Attendance"
@@ -270,13 +276,14 @@ export const StudentDashboardTabs = ({
           }
           isActive={activeTab === "attendance"}
           onPress={() => setActiveTab("attendance")}
+          t={t}
         />
       </View>
 
-      <View className="bg-white p-2 ">
+      <View className="bg-white p-2">
         {activeTab === "timetable" && renderTimetableTab(student)}
         {activeTab === "attendance" && (
-          <AttendanceChartSection student={student} />
+          <AttendanceChartSection student={student} t={t} />
         )}
       </View>
     </View>

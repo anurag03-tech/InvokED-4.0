@@ -32,11 +32,61 @@ const RegisterScreen = () => {
   const schoolDropdown = useDropdown();
 
   const schools = [
-    { label: "Delhi Public School", value: "Delhi Public School" },
-    { label: "St. Mary's School", value: "St. Mary's School" },
-    { label: "Modern School", value: "Modern School" },
-    { label: "Ryan International", value: "Ryan International" },
-    { label: "Cambridge International", value: "Cambridge International" },
+    {
+      label: "Kendriya Vidyalaya, RK Puram, Delhi",
+      value: "Kendriya Vidyalaya, RK Puram, Delhi",
+    },
+    {
+      label: "Jawahar Navodaya Vidyalaya, Mumbai, Maharashtra",
+      value: "Jawahar Navodaya Vidyalaya, Mumbai, Maharashtra",
+    },
+    {
+      label: "Government Model School, Bangalore, Karnataka",
+      value: "Government Model School, Bangalore, Karnataka",
+    },
+    {
+      label: "Sarvodaya Vidyalaya, Chennai, Tamil Nadu",
+      value: "Sarvodaya Vidyalaya, Chennai, Tamil Nadu",
+    },
+
+    {
+      label: "Municipal Corporation School, Kolkata, West Bengal",
+      value: "Municipal Corporation School, Kolkata, West Bengal",
+    },
+    {
+      label: "Government Higher Secondary School, Pune, Maharashtra",
+      value: "Government Higher Secondary School, Pune, Maharashtra",
+    },
+    {
+      label: "State Board School, Jaipur, Rajasthan",
+      value: "State Board School, Jaipur, Rajasthan",
+    },
+
+    {
+      label: "Kendriya Vidyalaya, Patna, Bihar",
+      value: "Kendriya Vidyalaya, Patna, Bihar",
+    },
+    {
+      label: "Government Senior Secondary School, Bhopal, Madhya Pradesh",
+      value: "Government Senior Secondary School, Bhopal, Madhya Pradesh",
+    },
+    {
+      label: "Jawahar Navodaya Vidyalaya, Chandigarh",
+      value: "Jawahar Navodaya Vidyalaya, Chandigarh",
+    },
+    {
+      label: "Government Higher Secondary School, Shimla, Himachal Pradesh",
+      value: "Government Higher Secondary School, Shimla, Himachal Pradesh",
+    },
+    {
+      label: "Kendriya Vidyalaya, Ranchi, Jharkhand",
+      value: "Kendriya Vidyalaya, Ranchi, Jharkhand",
+    },
+
+    {
+      label: "Navyug School, Imphal, Manipur",
+      value: "Navyug School, Imphal, Manipur",
+    },
   ];
 
   const handleChange = (name) => (value) => {

@@ -20,14 +20,15 @@ const LanguageSelection = () => {
   }, []);
 
   useEffect(() => {
-    if (!hasSpokenRef.current && !loading) {
+    // Only speak if there's no user and we haven't spoken yet
+    if (!hasSpokenRef.current && !loading && !user) {
       speakText(
         "Please select your preferred language from the options below. After selecting your language, click the Next button to continue.",
         "en-IN"
       );
       hasSpokenRef.current = true;
     }
-  }, [loading]);
+  }, [loading, user]);
 
   useEffect(() => {
     // If not loading and user is authenticated, redirect to home

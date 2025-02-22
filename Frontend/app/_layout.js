@@ -11,6 +11,7 @@ import { MuteProvider } from "./voiceAssistant/MuteContext";
 import { VoiceProvider } from "./voiceAssistant/VoiceContext";
 import { useSegments } from "expo-router";
 import { NotificationProvider } from "./context/notificationContext";
+import { StatusBar } from "react-native";
 
 function ProtectedLayout() {
   const { user, loading, role } = useAuth();
@@ -51,10 +52,14 @@ function ProtectedLayout() {
     }
   }, [user, loading, pathname, router, role]);
 
-  // Always use VoiceProvider for all routes, but UseVoiceRouteAssistant only for non-teacher routes
   return (
     <MuteProvider>
       <VoiceProvider>
+        <StatusBar
+          backgroundColor="black"
+          barStyle="light-content"
+          translucent={false}
+        />
         <Stack
           screenOptions={{
             headerShown: false,

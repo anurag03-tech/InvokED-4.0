@@ -14,11 +14,13 @@ import axios from "axios";
 import * as Notifications from "expo-notifications";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Input } from "~/components/ui/input";
+import { useTranslation } from "react-i18next";
 
 const API_URL = process.env.EXPO_PUBLIC_MY_API_URL;
 const EXPO_PROJECT_ID = process.env.EXPO_PUBLIC_PROJECT_ID;
 
 const Login = () => {
+  const { t } = useTranslation();
   const router = useRouter();
   const { login, role } = useAuth();
   const [formData, setFormData] = useState({
@@ -133,11 +135,13 @@ const Login = () => {
             className="w-64 h-64 mb-10"
           />
 
-          <Text className="text-3xl font-bold text-blue-600 mb-5">Login</Text>
+          <Text className="text-3xl font-bold text-blue-600 mb-5">
+            {t("Login")}
+          </Text>
 
           <View className="w-full gap-y-2">
             <View>
-              <Text className="text-base font-medium mb-1">Email</Text>
+              <Text className="text-base font-medium mb-1">{t("Email")}</Text>
               <Input
                 placeholder="Enter your email"
                 keyboardType="email-address"
@@ -151,7 +155,9 @@ const Login = () => {
             </View>
 
             <View>
-              <Text className="text-base font-medium mb-1">Password</Text>
+              <Text className="text-base font-medium mb-1">
+                {t("Password")}
+              </Text>
               <Input
                 placeholder="Enter your password"
                 secureTextEntry
@@ -164,7 +170,9 @@ const Login = () => {
           </View>
 
           {error ? (
-            <Text className="text-red-500 mt-2 mb-2 text-center">{error}</Text>
+            <Text className="text-red-500 mt-2 mb-2 text-center">
+              {t(error)}
+            </Text>
           ) : null}
 
           <TouchableOpacity
@@ -177,7 +185,7 @@ const Login = () => {
             {isLoading ? (
               <ActivityIndicator color="white" />
             ) : (
-              <Text className="text-white text-lg font-bold">Login</Text>
+              <Text className="text-white text-lg font-bold">{t("Login")}</Text>
             )}
           </TouchableOpacity>
 
@@ -187,8 +195,9 @@ const Login = () => {
             disabled={isLoading}
           >
             <Text className="text-base text-gray-600">
-              Don't have an account?{" "}
-              <Text className="text-blue-600 font-bold">Register</Text>
+              {t("Don't have an account")}
+              {"? "}
+              <Text className="text-blue-600 font-bold">{t("Register")}</Text>
             </Text>
           </TouchableOpacity>
         </View>
