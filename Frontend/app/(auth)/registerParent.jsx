@@ -323,6 +323,15 @@ const ParentRegistrationScreen = () => {
         projectId: EXPO_PROJECT_ID,
       });
 
+      if (Platform.OS === "android") {
+        await Notifications.setNotificationChannelAsync("default", {
+          name: "default",
+          importance: Notifications.AndroidImportance.MAX,
+          vibrationPattern: [0, 250, 250, 250],
+          lightColor: "#FF231F7C",
+        });
+      }
+
       await AsyncStorage.setItem("expoPushToken", tokenData.data);
       await axios.put(`${API_URL}/api/parent/push-token`, {
         pushToken: tokenData.data,

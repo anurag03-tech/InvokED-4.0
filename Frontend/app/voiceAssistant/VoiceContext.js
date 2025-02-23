@@ -9,7 +9,7 @@ import { Audio } from "expo-av";
 import axios from "axios";
 import { useMute } from "./MuteContext";
 
-const GOOGLE_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_TRANSLATE_API_KEY;
+const GOOGLE_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_TEXT_TO_SPEECH_API_KEY;
 
 const googleAxios = axios.create({
   headers: {
