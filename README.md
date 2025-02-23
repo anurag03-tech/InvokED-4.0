@@ -1,3 +1,10 @@
+## Team Details 👥
+- **Team Name**: Code4Shiksha
+- **Problem Statement**: Theme:4 - Increasing Parental Engagement
+
+<img src="https://github.com/user-attachments/assets/786e1152-35c8-47c6-801b-e917971dd87c" style="width: 100%; height: auto;">
+
+
 ## Tech Stack 💻
 
 ### Frontend
@@ -29,6 +36,7 @@
    ```env
    EXPO_PUBLIC_GOOGLE_GEMINI_API_KEY=
    EXPO_PUBLIC_MY_API_URL=
+   EXPO_PUBLIC_GOOGLE_TEXT_TO_SPEECH_API_KEY=
    ```
 
    NOTE: To get EXPO_PUBLIC_MY_API_URL:
