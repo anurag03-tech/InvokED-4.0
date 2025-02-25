@@ -17,6 +17,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
+import i18n from "i18next";
 
 const GOOGLE_GEMINI_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_GEMINI_API_KEY;
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
@@ -26,6 +27,7 @@ const ChatBot = () => {
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const currentLanguage = i18n.language;
 
   const flatListRef = useRef(null);
   const chatRef = useRef(null);
@@ -115,10 +117,11 @@ const ChatBot = () => {
 
   const generateGeminiResponse = async (userInput) => {
     try {
-      const context = `You're an AI assistant helping parents with their child's education queries. For questions about the child's subjects, teachers, or classroom, use this data: ${JSON.stringify(
-        classroomDataRef.current
-      )}
-      For other questions, give response based on your knowledge. ignore spelling mistakes`;
+      const context = `Parent asks you questions based on their child's data or general queries. First understand the context of what is being asked, then give a response only in this language: ${currentLanguage}
+
+CHILD DATA: 
+${JSON.stringify(classroomDataRef.current)}
+`;
 
       const result = await chatRef.current.sendMessage(
         `${context}\n\nUser: ${userInput}`

@@ -8,6 +8,7 @@ exports.addStudent = async (req, res) => {
     const { name, admissionNumber } = req.body;
     const classroomId = req.params.id;
     const school = req.user.school;
+    const teacherId = req.user.id;
 
     // Find the current classroom
     const currentClassroom = await Classroom.findById(classroomId);
@@ -18,8 +19,20 @@ exports.addStudent = async (req, res) => {
       });
     }
 
-    // Check if student already exists
-    let student = await Student.findOne({ admissionNumber });
+    // Check if the teacher is the class teacher
+    if (!currentClassroom.classTeacher) {
+      return res.status(403).json({
+        success: false,
+        message: "Only class teachers can add students",
+      });
+    }
+
+    // Check if student already exists in this school
+    let student = await Student.findOne({
+      admissionNumber,
+      school,
+    });
+
     if (student) {
       if (student.classrooms.includes(classroomId)) {
         return res.status(400).json({
@@ -37,7 +50,7 @@ exports.addStudent = async (req, res) => {
       });
     }
 
-    // Add to current classroom
+    // Add to current classroom (class teacher's classroom)
     if (!currentClassroom.students.includes(student._id)) {
       currentClassroom.students.push(student._id);
       await currentClassroom.save();
@@ -48,28 +61,24 @@ exports.addStudent = async (req, res) => {
       student.classrooms.push(classroomId);
     }
 
-    // Only sync with other classrooms if this is the class teacher's classroom
-    if (currentClassroom.classTeacher) {
-      // Find all subject classrooms of same grade & section in the school
-      const relatedClassrooms = await Classroom.find({
-        grade: currentClassroom.grade,
-        section: currentClassroom.section,
-        classTeacher: false,
-      }).populate("teacher", "school");
+    // Find all subject classrooms of same grade & section in the same school
+    const relatedClassrooms = await Classroom.find({
+      grade: currentClassroom.grade,
+      section: currentClassroom.section,
+      school: school, // If school is stored directly in classroom
+      _id: { $ne: classroomId }, // Exclude the current classroom
+    });
 
-      // Add student to all related classrooms of same school
-      for (const classroom of relatedClassrooms) {
-        if (classroom.teacher.school === school) {
-          if (!classroom.students.includes(student._id)) {
-            await Classroom.findByIdAndUpdate(classroom._id, {
-              $addToSet: { students: student._id },
-            });
-          }
+    // Add student to all related classrooms
+    for (const classroom of relatedClassrooms) {
+      if (!classroom.students.includes(student._id)) {
+        await Classroom.findByIdAndUpdate(classroom._id, {
+          $addToSet: { students: student._id },
+        });
+      }
 
-          if (!student.classrooms.includes(classroom._id)) {
-            student.classrooms.push(classroom._id);
-          }
-        }
+      if (!student.classrooms.includes(classroom._id)) {
+        student.classrooms.push(classroom._id);
       }
     }
 
@@ -78,6 +87,27 @@ exports.addStudent = async (req, res) => {
     res.status(201).json({
       success: true,
       student,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// Get all students of school
+exports.getSchoolStudents = async (req, res) => {
+  try {
+    const teacher = await Teacher.findById(req.user.id);
+    const students = await Student.find({ school: teacher.school }).populate(
+      "classrooms",
+      "name grade section"
+    );
+
+    res.status(200).json({
+      success: true,
+      students,
     });
   } catch (error) {
     res.status(500).json({

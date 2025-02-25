@@ -14,10 +14,11 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import i18n from "i18next";
 import { useTranslation } from "react-i18next";
+import ProfileLangSelector from "../components/ProfileLangSelector";
 
 const ProfileScreen = () => {
   const { t } = useTranslation();
-  const { user, logout } = useAuth();
+  const { user, logout, setUser } = useAuth();
   const router = useRouter();
   const [tips, setTips] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -164,6 +165,9 @@ const ProfileScreen = () => {
           </View>
         </View>
       </View>
+
+      {/* Language Selector */}
+      <ProfileLangSelector user={user} setUser={setUser} />
 
       {/* Parenting Tips Section */}
       {loading ? (

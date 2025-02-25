@@ -56,7 +56,7 @@ function ProtectedLayout() {
     <MuteProvider>
       <VoiceProvider>
         <StatusBar
-          backgroundColor="black"
+          backgroundColor="#000"
           barStyle="light-content"
           translucent={false}
         />

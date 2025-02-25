@@ -46,7 +46,7 @@ export const ClassroomsList = ({ student, router }) => {
             return (
               <TouchableOpacity
                 key={classroom._id}
-                className={`w-[48%] h-32 ${colorScheme.bg} ${colorScheme.border} rounded-lg p-3`}
+                className={`w-[48%] h-34 ${colorScheme.bg} ${colorScheme.border} rounded-lg p-3`}
                 onPress={() =>
                   router.push({
                     pathname: "../(classroom)/classroomIndex",

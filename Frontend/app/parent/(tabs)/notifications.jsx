@@ -208,10 +208,10 @@ const NotificationsScreen = () => {
         {notifications.length > 0 ? (
           <FlatList
             data={notifications}
-            keyExtractor={(item) =>
+            keyExtractor={(item, index) =>
               item._id
-                ? item._id.toString()
-                : `notification-${Math.random().toString(36).substr(2, 9)}`
+                ? `notification-${item._id.toString()}-${index}`
+                : `notification-${index}-${item.createdAt || Date.now()}`
             }
             renderItem={({ item }) => (
               <NotificationItem

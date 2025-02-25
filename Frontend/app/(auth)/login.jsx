@@ -16,6 +16,7 @@ import * as Notifications from "expo-notifications";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Input } from "~/components/ui/input";
 import { useTranslation } from "react-i18next";
+import i18n from "i18next";
 
 // Configure notification handler
 Notifications.setNotificationHandler({
@@ -70,6 +71,15 @@ const Login = () => {
           formData
         );
         const { user, token } = response.data;
+
+        // Set language using the proper method
+        if (user && user.language) {
+          console.log("Setting language to:", user.language);
+          i18n.changeLanguage(user.language);
+          // Also store it for app restarts
+          await AsyncStorage.setItem("userLanguage", user.language);
+        }
+
         await login(user, token);
         router.replace("teacher/(tabs)/home");
       } else if (role === "parent") {
@@ -78,6 +88,15 @@ const Login = () => {
           formData
         );
         const { user, token } = response.data;
+
+        // Set language using the proper method
+        if (user && user.language) {
+          console.log("Setting language to:", user.language);
+          i18n.changeLanguage(user.language);
+          // Also store it for app restarts
+          await AsyncStorage.setItem("userLanguage", user.language);
+        }
+
         await login(user, token);
         await registerForPushNotifications();
         router.replace("parent/(tabs)/home");
@@ -89,7 +108,6 @@ const Login = () => {
       setIsLoading(false);
     }
   };
-
   const registerForPushNotifications = async () => {
     try {
       const { status: existingStatus } =

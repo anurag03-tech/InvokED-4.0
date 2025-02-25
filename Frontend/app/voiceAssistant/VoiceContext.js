@@ -9,9 +9,33 @@ import { Audio } from "expo-av";
 import axios from "axios";
 import { useMute } from "./MuteContext";
 
-const GOOGLE_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_TEXT_TO_SPEECH_API_KEY;
+// Array of different user agents to rotate through
+const userAgents = [
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36",
+  "Mozilla/5.0 (iPhone; CPU iPhone OS 16_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Mobile/15E148 Safari/604.1",
+  "Mozilla/5.0 (iPad; CPU OS 16_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Mobile/15E148 Safari/604.1",
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Safari/605.1.15",
+  "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36",
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36 Edg/111.0.1661.62",
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/111.0",
+  "Mozilla/5.0 (Android 13; Mobile; rv:109.0) Gecko/111.0 Firefox/111.0",
+];
 
-const googleAxios = axios.create({
+// Generate random IP (for X-Forwarded-For header)
+const generateRandomIP = () => {
+  return Array(4)
+    .fill(0)
+    .map(() => Math.floor(Math.random() * 256))
+    .join(".");
+};
+
+// Utility to get a random item from an array
+const getRandomItem = (array) => {
+  return array[Math.floor(Math.random() * array.length)];
+};
+
+// Create axios instance for AI4Bharat API
+const ttsAxios = axios.create({
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
@@ -20,7 +44,10 @@ const googleAxios = axios.create({
 });
 
 // Remove any interceptors that might be modifying headers
-googleAxios.interceptors.request.clear();
+ttsAxios.interceptors.request.clear();
+
+// Simple in-memory cache for audio content
+const audioCache = new Map();
 
 const VoiceContext = createContext();
 
@@ -30,6 +57,8 @@ export const VoiceProvider = ({ children }) => {
   const [isReady, setIsReady] = useState(false);
   const apiCallInProgressRef = useRef(false);
   const retryCountRef = useRef(0);
+  const requestQueueRef = useRef([]);
+  const processingQueueRef = useRef(false);
 
   // Initialize audio system
   useEffect(() => {
@@ -80,77 +109,138 @@ export const VoiceProvider = ({ children }) => {
     await safeStopAudio();
   };
 
-  const speakText = async (text, languageCode) => {
-    if (
-      isMuted ||
-      !isReady ||
-      !text ||
-      !languageCode ||
-      apiCallInProgressRef.current
-    ) {
+  // Handle playback status updates
+  const handlePlaybackStatus = (status) => {
+    if (status.didJustFinish) {
+      try {
+        if (soundRef.current) {
+          const currentSound = soundRef.current;
+          currentSound.unloadAsync().catch(() => {});
+          soundRef.current = null;
+        }
+      } catch (e) {
+        console.error("Error unloading sound:", e);
+      }
+    }
+  };
+
+  // Process the request queue
+  const processQueue = async () => {
+    if (requestQueueRef.current.length === 0) {
+      processingQueueRef.current = false;
       return;
     }
 
-    try {
-      apiCallInProgressRef.current = true;
+    processingQueueRef.current = true;
+    const request = requestQueueRef.current.shift();
 
+    try {
+      await performSpeak(request.text, request.languageCode);
+    } catch (error) {
+      console.error("Error in queued speak request:", error);
+    }
+
+    // Add slight delay between requests
+    setTimeout(() => {
+      processQueue();
+    }, 300); // 300ms delay between requests
+  };
+
+  // The actual speak implementation
+  const performSpeak = async (text, languageCode) => {
+    try {
       // Force stop any existing audio
       await safeStopAudio();
 
-      // Generate a unique request ID to avoid caching
-      const timestamp =
-        Date.now() + Math.random().toString(36).substring(2, 10);
+      // Check cache first
+      const cacheKey = `${text}_${languageCode}`;
+      if (audioCache.has(cacheKey)) {
+        const cachedAudioUri = audioCache.get(cacheKey);
 
-      // Use Standard voice only
-      const response = await googleAxios({
+        const { sound } = await Audio.Sound.createAsync(
+          { uri: cachedAudioUri },
+          { shouldPlay: true },
+          handlePlaybackStatus
+        );
+
+        soundRef.current = sound;
+        return;
+      }
+
+      // Generate a unique request ID and timestamp
+      const timestamp = Date.now();
+      const requestId = Math.random().toString(36).substring(2, 10);
+
+      // Map language code to the format expected by AI4Bharat
+      const sourceLanguage = languageCode.split("-")[0] || "en";
+      const gender = "female";
+
+      // Generate random request identifiers
+      const randomUserAgent = getRandomItem(userAgents);
+      const randomIP = generateRandomIP();
+      const clientId = `client-${timestamp}-${requestId}`;
+
+      // Make request to AI4Bharat TTS API with randomized headers
+      const response = await ttsAxios({
         method: "post",
-        url: `https://texttospeech.googleapis.com/v1/text:synthesize?key=${GOOGLE_API_KEY}&_=${timestamp}`,
+        url: "https://demo-api.models.ai4bharat.org/inference/tts",
         data: {
-          input: { text },
-          voice: {
-            languageCode,
-            name: `${languageCode}-Standard-A`,
-            ssmlGender: "MALE",
+          controlConfig: {
+            dataTracking: true,
           },
-          audioConfig: {
-            audioEncoding: "MP3",
-            speakingRate: 0.9,
+          input: [
+            {
+              source: text,
+            },
+          ],
+          config: {
+            gender: gender,
+            language: {
+              sourceLanguage: sourceLanguage,
+            },
           },
         },
         headers: {
-          // Ensure no auth headers leak in
-          Authorization: null,
-          "X-Request-ID": `tts-${timestamp}`,
+          "X-Request-ID": `tts-${timestamp}-${requestId}`,
+          "User-Agent": randomUserAgent,
+          "X-Forwarded-For": randomIP,
+          "X-Client-ID": clientId,
+          "Accept-Language": getRandomItem([
+            "en-US,en;q=0.9",
+            "en-GB,en;q=0.8",
+            "en;q=0.7",
+          ]),
+          "Cache-Control": "no-cache",
+          Pragma: "no-cache",
         },
       });
 
       if (isMuted) {
-        apiCallInProgressRef.current = false;
         return;
       }
 
-      const audioContent = response.data.audioContent;
+      // Extract the base64 audio content from the response
+      const audioContent = response.data.audio[0].audioContent;
       if (!audioContent) {
         throw new Error("No audio content received");
       }
 
-      const audioUri = `data:audio/mp3;base64,${audioContent}`;
+      // Create audio URI with the correct MIME type (wav for AI4Bharat)
+      const audioUri = `data:audio/wav;base64,${audioContent}`;
+
+      // Cache this audio
+      audioCache.set(cacheKey, audioUri);
+
+      // If the cache gets too large, remove oldest entries
+      if (audioCache.size > 50) {
+        const oldestKey = audioCache.keys().next().value;
+        audioCache.delete(oldestKey);
+      }
 
       const { sound } = await Audio.Sound.createAsync(
         { uri: audioUri },
         { shouldPlay: true },
-        (status) => {
-          if (status.didJustFinish) {
-            try {
-              sound.unloadAsync().catch(() => {});
-            } catch (e) {
-              console.error("Error unloading sound:", e);
-            }
-            if (soundRef.current === sound) {
-              soundRef.current = null;
-            }
-          }
-        }
+        handlePlaybackStatus
       );
 
       soundRef.current = sound;
@@ -158,9 +248,21 @@ export const VoiceProvider = ({ children }) => {
     } catch (error) {
       retryCountRef.current++;
 
-      if (error.response?.status === 401) {
+      if (error.response?.status === 429) {
+        console.log("Rate limit reached (429), will retry with more delay");
+        // For 429 errors, we'll retry with more backoff
+        setTimeout(() => {
+          if (requestQueueRef.current.length < 5) {
+            // Avoid queue overflow
+            requestQueueRef.current.push({ text, languageCode });
+            if (!processingQueueRef.current) {
+              processQueue();
+            }
+          }
+        }, 2000 + Math.random() * 3000); // Random delay between 2-5 seconds
+      } else if (error.response?.status === 401) {
         console.error(
-          "Google API authentication failed. Attempt:",
+          "API authentication failed. Attempt:",
           retryCountRef.current
         );
 
@@ -174,6 +276,31 @@ export const VoiceProvider = ({ children }) => {
         }
       } else {
         console.error("Error in speakText:", error);
+      }
+    }
+  };
+
+  // Main speak function that adds to queue
+  const speakText = async (text, languageCode) => {
+    if (
+      isMuted ||
+      !isReady ||
+      !text ||
+      !languageCode ||
+      apiCallInProgressRef.current
+    ) {
+      return;
+    }
+
+    apiCallInProgressRef.current = true;
+
+    try {
+      // Add to queue
+      requestQueueRef.current.push({ text, languageCode });
+
+      // Start processing queue if not already
+      if (!processingQueueRef.current) {
+        processQueue();
       }
     } finally {
       apiCallInProgressRef.current = false;

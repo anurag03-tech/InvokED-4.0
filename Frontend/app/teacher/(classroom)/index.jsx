@@ -167,7 +167,7 @@ const ClassroomDetail = () => {
           {/* Announcements */}
 
           <TouchableOpacity
-            className="bg-white w-[48%] p-4 rounded-xl mb-4 shadow-sm border border-blue-200"
+            className="bg-white w-[48%] p-2 rounded-xl mb-4 shadow-sm border border-blue-200"
             onPress={() => navigateToFeature("announcement")}
           >
             <View className="items-center">

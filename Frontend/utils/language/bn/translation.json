@@ -137,5 +137,10 @@
   "Here you can view teacher remarks and feedback for your child, and send a response": "এখানে আপনি আপনার সন্তানের জন্য শিক্ষকের মন্তব্য এবং প্রতিক্রিয়া দেখতে পারবেন এবং একটি প্রতিক্রিয়া পাঠাতে পারবেন।",
   "You can chat with our assistant here. It will help you with your queries.": "আপনি এখানে আমাদের সহকারীর সাথে চ্যাট করতে পারবেন। এটি আপনার প্রশ্নের উত্তর দিতে সহায়তা করবে।",
   "You can access learning videos and audio content from here": "আপনি এখান থেকে শেখার ভিডিও এবং অডিও সামগ্রী অ্যাক্সেস করতে পারবেন।",
-  "You will get all important notifications about announcements and assignments from the teacher here": "আপনি এখানে শিক্ষকের কাছ থেকে ঘোষণাসমূহ এবং অ্যাসাইনমেন্ট সম্পর্কিত সমস্ত গুরুত্বপূর্ণ বিজ্ঞপ্তি পাবেন।"
+  "You will get all important notifications about announcements and assignments from the teacher here": "আপনি এখানে শিক্ষকের কাছ থেকে ঘোষণাসমূহ এবং অ্যাসাইনমেন্ট সম্পর্কিত সমস্ত গুরুত্বপূর্ণ বিজ্ঞপ্তি পাবেন।",
+  "Due": "বাকি",
+  "Notification": "নোটিফিকেশন",
+  "Change Default language of App": "অ্যাপের ডিফল্ট ভাষা পরিবর্তন করুন",
+  "Default Preferred language": "ডিফল্ট পছন্দনীয় ভাষা",
+  "Refresh": "রিফ্রেশ"
 }

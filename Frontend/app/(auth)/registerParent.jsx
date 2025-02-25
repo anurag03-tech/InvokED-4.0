@@ -7,6 +7,7 @@ import {
   ScrollView,
   ActivityIndicator,
   KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth } from "../context/authContext";
@@ -39,6 +40,7 @@ const ParentRegistrationScreen = () => {
     password: "",
     phone: "",
     relation: "father",
+    language: "en",
     children: [{ name: "", school: "", admissionNumber: "" }],
   });
   const [error, setError] = useState("");
