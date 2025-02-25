@@ -100,7 +100,8 @@ const UseVoiceRouteAssistant = () => {
     // Delay speaking to prevent rapid-fire
     timeoutRef.current = setTimeout(async () => {
       try {
-        await speakText(textToSpeak, `${currentLanguage}-IN`);
+        // Pass the currentRoute as the third parameter for local audio lookup
+        await speakText(textToSpeak, currentLanguage, currentRoute);
       } catch (error) {
         console.error("Error speaking text:", error);
         // Retry logic with exponential backoff (max 3 attempts)
@@ -109,7 +110,7 @@ const UseVoiceRouteAssistant = () => {
           const backoffDelay = Math.pow(2, attemptsRef.current) * 500;
           timeoutRef.current = setTimeout(async () => {
             try {
-              await speakText(textToSpeak, `${currentLanguage}-IN`);
+              await speakText(textToSpeak, currentLanguage, currentRoute);
             } catch (retryError) {
               console.error("Retry failed:", retryError);
             } finally {

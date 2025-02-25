@@ -1,55 +1,11 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
 import * as Notifications from "expo-notifications";
-import * as Device from "expo-device";
-import Constants from "expo-constants";
 import { useAuth } from "./authContext";
 import axios from "axios";
 
 const API_URL = process.env.EXPO_PUBLIC_MY_API_URL;
 
-// Configure notifications
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-  }),
-});
-
 const NotificationContext = createContext();
-
-async function registerForPushNotificationsAsync() {
-  let token;
-
-  if (Device.isDevice) {
-    const { status: existingStatus } =
-      await Notifications.getPermissionsAsync();
-    let finalStatus = existingStatus;
-    if (existingStatus !== "granted") {
-      const { status } = await Notifications.requestPermissionsAsync();
-      finalStatus = status;
-    }
-    if (finalStatus !== "granted") {
-      console.log("Failed to get push token for push notification!");
-      return;
-    }
-    token = (
-      await Notifications.getExpoPushTokenAsync({
-        projectId: Constants.expoConfig.extra.eas.projectId,
-      })
-    ).data;
-
-    if (__DEV__) {
-      console.log("Expo Go Push Token:", token);
-    } else {
-      console.log("APK Push Token:", token);
-    }
-  } else {
-    console.log("Must use physical device for Push Notifications");
-  }
-
-  return token;
-}
 
 export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
@@ -59,7 +15,7 @@ export const NotificationProvider = ({ children }) => {
   // Set up notification listeners for parents
   useEffect(() => {
     if (role === "parent") {
-      registerForPushNotificationsAsync();
+      // No registration code here - it's now handled in Login.js
 
       // Listen for incoming notifications when app is running
       const notificationListener =

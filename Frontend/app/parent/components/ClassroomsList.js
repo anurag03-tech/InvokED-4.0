@@ -55,6 +55,7 @@ export const ClassroomsList = ({ student, router }) => {
                       subject: classroom.subject,
                       grade: classroom.grade,
                       section: classroom.section,
+                      studentId: student._id, // Added student ID to params
                     },
                   })
                 }

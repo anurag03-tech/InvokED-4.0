@@ -52,8 +52,11 @@ export const ParentDashboardHeader = ({
             </Text>
           </View>
           {!isOnline && (
-            <View className="bg-white px-2 py-1 rounded-lg border">
-              <Text className="text-blue-900 font-semibold ">
+            <View
+              style={{ backgroundColor: "#FFDD00" }}
+              className="px-2 py-1 rounded-lg border border-yellow-600"
+            >
+              <Text style={{ color: "#7D4E00" }} className="font-semibold">
                 {t("Offline")}
               </Text>
             </View>
