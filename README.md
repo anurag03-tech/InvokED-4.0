@@ -17,6 +17,15 @@
 - Express.js
 - MongoDB
 
+#### Features Implementation
+
+- **Notification:** Expo Notification and Firebase Cloud Messaging (FCM) --> *(open-source)*
+- **Multilingual App Interface:** i18next + AI4Bharat Indic Translation (NMT) --> *(open-source)*
+- **Multilingual Chatbot:** Gemini --> *(not fully open-source)*. Alternatively, we can use Google Gemma or DeepSeek
+- **Multilingual Voice Assistant:** i18next + AI4Bharat's Indic-TTS --> *(open-source)*
+
+
+
 ### Frontend Setup
 
 1. Navigate to the frontend directory:
@@ -36,7 +45,6 @@
    ```env
    EXPO_PUBLIC_GOOGLE_GEMINI_API_KEY=
    EXPO_PUBLIC_MY_API_URL=
-   EXPO_PUBLIC_GOOGLE_TEXT_TO_SPEECH_API_KEY=
    ```
 
    NOTE: To get EXPO_PUBLIC_MY_API_URL:
@@ -79,4 +87,5 @@
    PORT=
    JWT_SECRET=
    MONGODB_URI=
+   BACKEND_URL=
    ```
