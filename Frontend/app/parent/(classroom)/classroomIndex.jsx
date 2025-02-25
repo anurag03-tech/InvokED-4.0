@@ -34,13 +34,16 @@ const normalizeSectionType = (sectionType) => {
 const ClassroomDetail = () => {
   const params = useLocalSearchParams();
   const router = useRouter();
-  const { token } = useAuth();
+  const { token, user } = useAuth(); // Get the user to know which child is selected
   const { t } = useTranslation();
   const { notifications, markAsRead } = useNotification();
   const [marksLoading, setMarksLoading] = useState(true);
   const [activeSection, setActiveSection] = useState(
     params.activeSection || "announcements"
   );
+
+  // Get the student ID from params (passed from parent dashboard)
+  const currentStudentId = params.studentId;
 
   const { classroom, loading, isOnline } = useClassroom(
     params.id,
@@ -172,7 +175,12 @@ const ClassroomDetail = () => {
         if (marksLoading) {
           return <MarksSkeleton />;
         }
-        return <MarksSection classroom={classroom} />;
+        return (
+          <MarksSection
+            classroom={classroom}
+            currentStudentId={currentStudentId}
+          />
+        );
       default:
         return null;
     }
@@ -182,6 +190,7 @@ const ClassroomDetail = () => {
     classroom,
     renderAnnouncements,
     renderAssignments,
+    currentStudentId,
   ]);
 
   const handleRemarks = useCallback(() => {
@@ -192,6 +201,7 @@ const ClassroomDetail = () => {
         subject: classroom.subject,
         grade: classroom.grade,
         section: classroom.section,
+        studentId: currentStudentId, // Pass student ID to remarks page as well
       },
     });
   }, [
@@ -200,6 +210,7 @@ const ClassroomDetail = () => {
     classroom?.subject,
     classroom?.grade,
     classroom?.section,
+    currentStudentId,
   ]);
 
   if (loading) {
@@ -223,8 +234,11 @@ const ClassroomDetail = () => {
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
       {!isOnline && (
-        <View className="bg-yellow-500 px-4 py-2">
-          <Text className="text-white text-center">
+        <View style={{ backgroundColor: "#FFDD00" }} className="px-4 py-2">
+          <Text
+            style={{ color: "#7D4E00" }}
+            className="font-semibold text-center"
+          >
             {t("Offline Mode - Some data may not be up to date")}
           </Text>
         </View>

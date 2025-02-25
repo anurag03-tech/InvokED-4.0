@@ -1,38 +1,3 @@
-let successfulRequestsCount = 0;
-
-// Generate multiple different user agents
-const userAgents = [
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Safari/605.1.15",
-  "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36",
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36 Edg/92.0.902.78",
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0",
-  "Mozilla/5.0 (iPhone; CPU iPhone OS 14_7_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2 Mobile/15E148 Safari/604.1",
-  "Mozilla/5.0 (iPad; CPU OS 14_7_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2 Mobile/15E148 Safari/604.1",
-  "Mozilla/5.0 (Linux; Android 11; SM-G998B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Mobile Safari/537.36",
-];
-
-// Generate random user agent
-const getRandomUserAgent = () => {
-  // Increment index for each request to use a different agent each time
-  const index = successfulRequestsCount % userAgents.length;
-  return userAgents[index];
-};
-
-// Generate random IP
-const getRandomIP = () => {
-  return Array(4)
-    .fill(0)
-    .map(() => Math.floor(Math.random() * 256))
-    .join(".");
-};
-
-// Create different request IDs
-const getRequestId = () => {
-  return `req-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-};
-
-// Simple in-memory cache
 const translationCache = new Map();
 
 const translateBatch = async (
@@ -44,101 +9,242 @@ const translateBatch = async (
   // Maximum 3 retries
   const MAX_RETRIES = 3;
 
+  // Log input text
+  console.log("Text before translation:", JSON.stringify(texts));
+  console.log(`Translating from ${sourceLanguage} to ${targetLanguage}`);
+
   try {
-    // Check if we have this exact translation in cache
-    const cacheKey = JSON.stringify({ texts, sourceLanguage, targetLanguage });
-    if (translationCache.has(cacheKey)) {
-      console.log("Using cached translation result");
-      return translationCache.get(cacheKey);
+    // Process input: Extract actual text content from objects
+    let processedInputs = [];
+
+    if (Array.isArray(texts)) {
+      if (
+        texts.length > 0 &&
+        typeof texts[0] === "object" &&
+        "source" in texts[0]
+      ) {
+        // Extract each source text separately
+        processedInputs = texts.map((item) => item.source);
+      } else {
+        // For array of strings
+        processedInputs = texts;
+      }
+    } else {
+      // For single string
+      processedInputs = [texts];
     }
 
-    const requestId = getRequestId();
-    const randomIP = getRandomIP();
-    const userAgent = getRandomUserAgent();
+    // Check cache first
+    const cacheKey = JSON.stringify({
+      texts,
+      sourceLanguage,
+      targetLanguage,
+    });
 
-    const response = await fetch(
-      "https://demo-api.models.ai4bharat.org/inference/translation/v2",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "User-Agent": userAgent,
-          "X-Forwarded-For": randomIP,
-          "X-Request-ID": requestId,
-          "Cache-Control": "no-cache, no-store, must-revalidate",
-          Pragma: "no-cache",
-          Expires: "0",
-        },
-        body: JSON.stringify({
-          controlConfig: {
-            dataTracking: true,
-          },
-          input: texts,
-          config: {
-            serviceId: "",
-            language: {
+    if (translationCache.has(cacheKey)) {
+      const cachedResult = translationCache.get(cacheKey);
+      console.log("Using cached translation result");
+      return cachedResult;
+    }
+
+    // Translate each input separately to preserve structure
+    const translations = [];
+
+    // Process each input text separately
+    for (let i = 0; i < processedInputs.length; i++) {
+      const inputText = processedInputs[i];
+
+      // Skip empty inputs
+      if (!inputText || inputText.trim().length === 0) {
+        translations.push("");
+        continue;
+      }
+
+      // Modify very short text inputs to avoid API errors
+      // The API often responds with 403 for very short inputs
+      let modifiedInput = inputText;
+      if (inputText.length < 5) {
+        // Add a period to very short texts to avoid 403 errors
+        modifiedInput = inputText + ".";
+        console.log(
+          `Modified short input "${inputText}" to "${modifiedInput}" to avoid API errors`
+        );
+      }
+
+      try {
+        // Make API request
+        const response = await fetch(
+          "https://admin.models.ai4bharat.org/inference/translate",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Cache-Control": "no-cache, no-store, must-revalidate",
+              Pragma: "no-cache",
+              Expires: "0",
+            },
+            body: JSON.stringify({
               sourceLanguage: sourceLanguage,
               targetLanguage: targetLanguage,
-              targetScriptCode: null,
-              sourceScriptCode: null,
-            },
-          },
-        }),
-      }
-    );
-
-    if (response.status === 429) {
-      // If we haven't exceeded max retries, try again
-      if (retryCount < MAX_RETRIES) {
-        console.log(
-          `Rate limit hit (429). Retry attempt ${
-            retryCount + 1
-          } of ${MAX_RETRIES}`
+              input: modifiedInput,
+              task: "translation",
+              serviceId: "ai4bharat/indictrans--gpu-t4",
+              track: true,
+            }),
+          }
         );
 
-        // Try again with incremented retry count
-        return translateBatch(
-          texts,
-          sourceLanguage,
-          targetLanguage,
-          retryCount + 1
-        );
+        // Handle rate limiting
+        if (response.status === 429) {
+          if (retryCount < MAX_RETRIES) {
+            console.log(
+              `Rate limit hit (429). Retry attempt ${
+                retryCount + 1
+              } of ${MAX_RETRIES}`
+            );
+
+            // Wait a bit before retrying (exponential backoff)
+            await new Promise((resolve) =>
+              setTimeout(resolve, Math.pow(2, retryCount) * 1000)
+            );
+
+            return translateBatch(
+              texts,
+              sourceLanguage,
+              targetLanguage,
+              retryCount + 1
+            );
+          }
+          throw new Error(`Translation API error: ${response.status}`);
+        }
+
+        // Handle 403 errors (usually auth issues or unsupported language pairs)
+        if (response.status === 403) {
+          console.log(
+            `AUTH ERROR (403) translating "${inputText}". Using original text.`
+          );
+          // For 403 errors, use the original text rather than failing completely
+          translations.push(inputText);
+          continue;
+        }
+
+        if (!response.ok) {
+          console.log(
+            `Error ${response.status} translating "${inputText}". Using original text.`
+          );
+          // For other errors, use the original text rather than failing
+          translations.push(inputText);
+          continue;
+        }
+
+        // Parse response
+        const data = await response.json();
+
+        // Extract translated text
+        let translatedText = "";
+        if (data.output) {
+          if (typeof data.output === "string") {
+            translatedText = data.output;
+          } else if (Array.isArray(data.output) && data.output.length > 0) {
+            translatedText = data.output[0].target || "";
+          }
+        }
+
+        // If we modified the input by adding a period, remove it from the output if necessary
+        if (
+          inputText.length < 5 &&
+          modifiedInput !== inputText &&
+          translatedText.endsWith(".")
+        ) {
+          translatedText = translatedText.slice(0, -1);
+        }
+
+        // Store the translation
+        translations.push(translatedText || inputText);
+      } catch (error) {
+        console.error(`Error translating "${inputText}":`, error);
+        // Use original text in case of errors
+        translations.push(inputText);
       }
-
-      throw new Error(`Translation API error: ${response.status}`);
     }
 
-    if (!response.ok) {
-      throw new Error(`Translation API error: ${response.status}`);
-    }
+    // Format the output to match expected structure
+    const result = {
+      taskType: "translation",
+      output:
+        Array.isArray(texts) &&
+        texts.length > 0 &&
+        typeof texts[0] === "object" &&
+        "source" in texts[0]
+          ? texts.map((item, index) => ({
+              source: item.source,
+              target: translations[index] || item.source, // fallback to source if no translation
+            }))
+          : translations.map((translation, index) => ({
+              source: Array.isArray(texts) ? texts[index] : texts,
+              target:
+                translation || (Array.isArray(texts) ? texts[index] : texts), // fallback to source
+            })),
+      config: null,
+    };
 
-    // Request was successful
-    successfulRequestsCount++;
-    const data = await response.json();
+    // Log translated text
+    console.log("Text after translation:", JSON.stringify(result));
 
     // Cache the result
-    translationCache.set(cacheKey, data);
+    translationCache.set(cacheKey, result);
 
-    // Limit cache size (optional)
+    // Limit cache size
     if (translationCache.size > 100) {
       // Delete oldest entry
       const firstKey = translationCache.keys().next().value;
       translationCache.delete(firstKey);
     }
 
-    return data;
+    return result;
   } catch (error) {
     console.error("Translation API error:", error);
 
     // For errors other than those we've already handled retry logic for
     if (!error.message.includes("429") || retryCount >= MAX_RETRIES) {
-      return { output: [] }; // Return an empty array to prevent crashes
+      // Create a fallback result that uses the original text instead of empty strings
+      const fallbackResult = {
+        taskType: "translation",
+        output:
+          Array.isArray(texts) &&
+          texts.length > 0 &&
+          typeof texts[0] === "object" &&
+          "source" in texts[0]
+            ? texts.map((item) => ({
+                source: item.source,
+                target: item.source, // Use source text as fallback
+              }))
+            : [
+                {
+                  source: Array.isArray(texts) ? texts.join(" ") : texts,
+                  target: Array.isArray(texts) ? texts.join(" ") : texts, // Use source text
+                },
+              ],
+        config: null,
+      };
+
+      console.log(
+        "Text after translation (fallback):",
+        JSON.stringify(fallbackResult)
+      );
+      return fallbackResult;
     }
 
-    // Try again for other errors
+    // Try again for other errors with exponential backoff
     console.log(
       `Error occurred. Retry attempt ${retryCount + 1} of ${MAX_RETRIES}`
     );
+
+    // Wait before retrying
+    await new Promise((resolve) =>
+      setTimeout(resolve, Math.pow(2, retryCount) * 1000)
+    );
+
     return translateBatch(
       texts,
       sourceLanguage,

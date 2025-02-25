@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Frontend",
+    "name": "Parent Sync",
     "slug": "Frontend",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -19,7 +19,8 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to access your microphone for audio recording."
+        "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to access your microphone for audio recording.",
+        "UIBackgroundModes": ["remote-notification"]
       }
     },
     "android": {
@@ -55,12 +56,24 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/images/notification-icon.png",
+          "icon": "./assets/images/notification-icon.jpg",
           "color": "#ffffff",
-          "sounds": ["./assets/notification.wav"]
+          "sounds": ["./assets/notification.wav"],
+          "androidMode": "default",
+          "androidCollapsedTitle": "#{unread_notifications} new notifications",
+          "iosDisplayInForeground": true,
+          "androidImportance": "max",
+          "androidPriority": "high"
         }
       ]
     ],
+    "notification": {
+      "icon": "./assets/images/notification-icon.jpg",
+      "color": "#ffffff",
+      "androidMode": "default",
+      "androidCollapsedTitle": "#{unread_notifications} new notifications",
+      "iosDisplayInForeground": true
+    },
     "experiments": {
       "typedRoutes": true
     },

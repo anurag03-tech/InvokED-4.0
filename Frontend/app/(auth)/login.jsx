@@ -16,14 +16,14 @@ import * as Notifications from "expo-notifications";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Input } from "~/components/ui/input";
 import { useTranslation } from "react-i18next";
-import i18n from "i18next";
 
-// Configure notification handler
+// Configure notification handler with HIGH priority
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
     shouldPlaySound: true,
-    shouldSetBadge: false,
+    shouldSetBadge: true,
+    priority: Notifications.AndroidNotificationPriority.HIGH,
   }),
 });
 
@@ -71,15 +71,6 @@ const Login = () => {
           formData
         );
         const { user, token } = response.data;
-
-        // Set language using the proper method
-        if (user && user.language) {
-          console.log("Setting language to:", user.language);
-          i18n.changeLanguage(user.language);
-          // Also store it for app restarts
-          await AsyncStorage.setItem("userLanguage", user.language);
-        }
-
         await login(user, token);
         router.replace("teacher/(tabs)/home");
       } else if (role === "parent") {
@@ -88,17 +79,8 @@ const Login = () => {
           formData
         );
         const { user, token } = response.data;
-
-        // Set language using the proper method
-        if (user && user.language) {
-          console.log("Setting language to:", user.language);
-          i18n.changeLanguage(user.language);
-          // Also store it for app restarts
-          await AsyncStorage.setItem("userLanguage", user.language);
-        }
-
         await login(user, token);
-        await registerForPushNotifications();
+        await registerForPushNotifications(token);
         router.replace("parent/(tabs)/home");
       }
     } catch (err) {
@@ -108,8 +90,23 @@ const Login = () => {
       setIsLoading(false);
     }
   };
-  const registerForPushNotifications = async () => {
+
+  const registerForPushNotifications = async (authToken) => {
     try {
+      // Set up Android notification channel first
+      if (Platform.OS === "android") {
+        await Notifications.setNotificationChannelAsync("default", {
+          name: "default",
+          importance: Notifications.AndroidImportance.MAX,
+          vibrationPattern: [0, 250, 250, 250],
+          lightColor: "#FF231F7C",
+          sound: true,
+          priority: Notifications.AndroidNotificationPriority.HIGH,
+          showBadge: true,
+        });
+      }
+
+      // Then request permissions
       const { status: existingStatus } =
         await Notifications.getPermissionsAsync();
       let finalStatus = existingStatus;
@@ -124,26 +121,33 @@ const Login = () => {
         return;
       }
 
+      // Get push token
       const tokenData = await Notifications.getExpoPushTokenAsync({
         projectId: EXPO_PROJECT_ID,
       });
 
-      if (Platform.OS === "android") {
-        await Notifications.setNotificationChannelAsync("default", {
-          name: "default",
-          importance: Notifications.AndroidImportance.MAX,
-          vibrationPattern: [0, 250, 250, 250],
-          lightColor: "#FF231F7C",
-        });
+      // Save token locally
+      await AsyncStorage.setItem("expoPushToken", tokenData.data);
+
+      // Save token to server - using the auth token passed from login response
+      try {
+        await axios.put(
+          `${API_URL}/api/parent/push-token`,
+          { pushToken: tokenData.data },
+          {
+            headers: {
+              Authorization: `Bearer ${authToken}`,
+            },
+          }
+        );
+        console.log("Push token saved to server successfully");
+      } catch (err) {
+        console.error("Error saving push token to server:", err);
       }
 
-      await AsyncStorage.setItem("expoPushToken", tokenData.data);
-      await axios.put(`${API_URL}/api/parent/push-token`, {
-        pushToken: tokenData.data,
-      });
+      console.log("Push notification registration successful");
     } catch (error) {
       console.error("Error registering for push notifications:", error);
-      throw error;
     }
   };
 

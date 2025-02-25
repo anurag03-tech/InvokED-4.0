@@ -20,6 +20,16 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Input } from "~/components/ui/input";
 import { useTranslation } from "react-i18next";
 
+// Configure notification handler with HIGH priority
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+    priority: Notifications.AndroidNotificationPriority.HIGH,
+  }),
+});
+
 const API_URL = process.env.EXPO_PUBLIC_MY_API_URL;
 const EXPO_PROJECT_ID = process.env.EXPO_PUBLIC_PROJECT_ID;
 
@@ -295,7 +305,7 @@ const ParentRegistrationScreen = () => {
       const { user, token } = response.data;
 
       await login(user, token);
-      await registerForPushNotifications();
+      await registerForPushNotifications(token);
       router.replace("parent/(tabs)/home");
     } catch (err) {
       setError(err.response?.data?.message || "Registration failed");
@@ -305,8 +315,22 @@ const ParentRegistrationScreen = () => {
     }
   };
 
-  const registerForPushNotifications = async () => {
+  const registerForPushNotifications = async (authToken) => {
     try {
+      // Set up Android notification channel first with HIGH priority
+      if (Platform.OS === "android") {
+        await Notifications.setNotificationChannelAsync("default", {
+          name: "default",
+          importance: Notifications.AndroidImportance.MAX,
+          vibrationPattern: [0, 250, 250, 250],
+          lightColor: "#FF231F7C",
+          sound: true,
+          priority: Notifications.AndroidNotificationPriority.HIGH,
+          showBadge: true,
+        });
+      }
+
+      // Then request permissions
       const { status: existingStatus } =
         await Notifications.getPermissionsAsync();
       let finalStatus = existingStatus;
@@ -321,26 +345,36 @@ const ParentRegistrationScreen = () => {
         return;
       }
 
+      // Get push token
       const tokenData = await Notifications.getExpoPushTokenAsync({
         projectId: EXPO_PROJECT_ID,
       });
 
-      if (Platform.OS === "android") {
-        await Notifications.setNotificationChannelAsync("default", {
-          name: "default",
-          importance: Notifications.AndroidImportance.MAX,
-          vibrationPattern: [0, 250, 250, 250],
-          lightColor: "#FF231F7C",
-        });
+      // Save token locally
+      await AsyncStorage.setItem("expoPushToken", tokenData.data);
+
+      // Save token to server
+      try {
+        await axios.put(
+          `${API_URL}/api/parent/push-token`,
+          { pushToken: tokenData.data },
+          {
+            headers: {
+              Authorization: `Bearer ${authToken}`,
+            },
+          }
+        );
+        console.log("Push token saved to server successfully");
+      } catch (err) {
+        console.error("Error saving push token to server:", err);
       }
 
-      await AsyncStorage.setItem("expoPushToken", tokenData.data);
-      await axios.put(`${API_URL}/api/parent/push-token`, {
-        pushToken: tokenData.data,
-      });
+      console.log(
+        "Push notification registration successful with token:",
+        tokenData.data
+      );
     } catch (error) {
       console.error("Error registering for push notifications:", error);
-      throw error;
     }
   };
 
