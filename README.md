@@ -2,7 +2,7 @@
 - **Team Name**: Code4Shiksha
 - **Problem Statement**: Theme:4 - Increasing Parental Engagement
 
-<img src="https://github.com/user-attachments/assets/786e1152-35c8-47c6-801b-e917971dd87c" style="width: 100%; height: auto;">
+<img src="https://github.com/user-attachments/assets/786e1152-35c8-47c6-801b-e917971dd87c" style="width: 80%; height: auto;">
 
 
 ## Tech Stack 💻
@@ -24,7 +24,7 @@
 - **Multilingual Chatbot:** Gemini --> *(not fully open-source)*. Alternatively, we can use Google Gemma or DeepSeek
 - **Multilingual Voice Assistant:** i18next + AI4Bharat's Indic-TTS --> *(open-source)*
 
-
+---
 
 ### Frontend Setup
 
