@@ -8,6 +8,7 @@ const {
   getAllMarks,
   getClassroomTimetable,
   updatePushToken,
+  updateLanguage,
 } = require("../controllers/parentController");
 const { isParentAuthenticated } = require("../middlewares/parentAuth");
 const {
@@ -23,6 +24,7 @@ router.post("/login", login);
 
 // Profile routes
 router.get("/profile", isParentAuthenticated, getProfile);
+router.put("/update-language", isParentAuthenticated, updateLanguage);
 
 // Classroom routes
 router.get("/classroom/:id", isParentAuthenticated, getClassroomDetails);

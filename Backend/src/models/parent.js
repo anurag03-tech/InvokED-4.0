@@ -30,7 +30,7 @@ const parentSchema = new mongoose.Schema({
       ref: "Student",
     },
   ],
-  avatar: {
+  language: {
     type: String,
   },
   pushToken: {

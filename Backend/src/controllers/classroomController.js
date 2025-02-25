@@ -2,6 +2,7 @@ const Classroom = require("../models/classroom");
 const Teacher = require("../models/teacher");
 const Student = require("../models/student");
 const notificationService = require("../services/notificationService");
+const translateBatch = require("../utils/translateBatch");
 
 exports.createClassroom = async (req, res) => {
   try {
@@ -185,12 +186,11 @@ exports.addAssignment = async (req, res) => {
   try {
     const { title, description, dueDate } = req.body;
 
-    // Populate students to check for parents
     const classroom = await Classroom.findById(req.params.id).populate({
       path: "students",
       populate: {
         path: "parents.parent",
-        select: "pushToken",
+        select: "pushToken language",
       },
     });
 
@@ -201,7 +201,6 @@ exports.addAssignment = async (req, res) => {
       });
     }
 
-    // Check if the classroom belongs to the logged-in teacher
     if (classroom.teacher.toString() !== req.user.id) {
       return res.status(403).json({
         success: false,
@@ -214,35 +213,83 @@ exports.addAssignment = async (req, res) => {
       description,
       dueDate,
     });
-
     await classroom.save();
 
-    // Check if there are any students with parents
-    const parentIds = [];
+    const uniqueParents = new Map();
 
-    if (classroom.students && classroom.students.length > 0) {
-      classroom.students.forEach((student) => {
-        if (student.parents && student.parents.length > 0) {
-          student.parents.forEach((parentInfo) => {
-            if (parentInfo.parent && parentInfo.parent._id) {
-              parentIds.push(parentInfo.parent._id.toString());
-            }
-          });
+    classroom.students.forEach((student) => {
+      student.parents.forEach((parentInfo) => {
+        if (parentInfo.parent && parentInfo.parent._id) {
+          const parentId = parentInfo.parent._id.toString();
+          const language = parentInfo.parent.language || "en";
+          const pushToken = parentInfo.parent.pushToken;
+
+          if (!uniqueParents.has(parentId)) {
+            uniqueParents.set(parentId, { language, pushToken });
+          }
         }
       });
+    });
+
+    const languageGroups = new Map();
+    for (const [parentId, { language, pushToken }] of uniqueParents) {
+      if (!languageGroups.has(language)) {
+        languageGroups.set(language, []);
+      }
+      languageGroups.get(language).push({ parentId, pushToken });
     }
 
-    // Only send notification if there are recipients
-    if (parentIds.length > 0) {
-      //console.log(`Sending notification to ${parentIds.length} parents`);
-      await notificationService.sendClassroomNotification(
-        classroom,
-        `Assignment: ${title}`,
-        `Due Date: ${new Date(dueDate).toLocaleDateString()}\n${description}`,
-        "assignment"
-      );
-    } else {
-      //console.log("No parent recipients found for this classroom");
+    for (const [language, parents] of languageGroups) {
+      let notificationTitle = title;
+      let notificationContent = `Due Date: ${new Date(
+        dueDate
+      ).toLocaleDateString()}\n${description}`;
+      let assignmentPrefix = "Assignment: ";
+      let dueDatePrefix = "Due Date: ";
+
+      if (language !== "en") {
+        try {
+          const textsToTranslate = [
+            { source: title },
+            { source: description },
+            { source: assignmentPrefix },
+            { source: dueDatePrefix },
+          ];
+          const translationResponse = await translateBatch(
+            textsToTranslate,
+            "en",
+            language
+          );
+
+          if (
+            translationResponse.output &&
+            translationResponse.output.length > 0
+          ) {
+            notificationTitle = translationResponse.output[0].target;
+            assignmentPrefix = translationResponse.output[2].target;
+            dueDatePrefix = translationResponse.output[3].target;
+            notificationContent = `${dueDatePrefix} ${new Date(
+              dueDate
+            ).toLocaleDateString()}\n${translationResponse.output[1].target}`;
+          }
+        } catch (error) {
+          console.error(`Translation error for language ${language}:`, error);
+          continue;
+        }
+      }
+
+      const pushTokens = parents
+        .map((parent) => parent.pushToken)
+        .filter(Boolean);
+      if (pushTokens.length > 0) {
+        await notificationService.sendClassroomNotification(
+          classroom,
+          `${assignmentPrefix}${notificationTitle}`,
+          notificationContent,
+          "assignment",
+          pushTokens
+        );
+      }
     }
 
     res.status(200).json({
@@ -328,18 +375,15 @@ exports.deleteAssignment = async (req, res) => {
   }
 };
 
-// Add announcement
-
 exports.addAnnouncement = async (req, res) => {
   try {
     const { title, content } = req.body;
 
-    // Populate students to check for parents
     const classroom = await Classroom.findById(req.params.id).populate({
       path: "students",
       populate: {
         path: "parents.parent",
-        select: "pushToken",
+        select: "pushToken language",
       },
     });
 
@@ -350,7 +394,6 @@ exports.addAnnouncement = async (req, res) => {
       });
     }
 
-    // Check if the classroom belongs to the logged-in teacher
     if (classroom.teacher.toString() !== req.user.id) {
       return res.status(403).json({
         success: false,
@@ -358,39 +401,77 @@ exports.addAnnouncement = async (req, res) => {
       });
     }
 
-    classroom.announcements.push({
-      title,
-      content,
-    });
-
+    classroom.announcements.push({ title, content });
     await classroom.save();
 
-    // Check if there are any students with parents
-    const parentIds = [];
+    const uniqueParents = new Map();
 
-    if (classroom.students && classroom.students.length > 0) {
-      classroom.students.forEach((student) => {
-        if (student.parents && student.parents.length > 0) {
-          student.parents.forEach((parentInfo) => {
-            if (parentInfo.parent && parentInfo.parent._id) {
-              parentIds.push(parentInfo.parent._id.toString());
-            }
-          });
+    classroom.students.forEach((student) => {
+      student.parents.forEach((parentInfo) => {
+        if (parentInfo.parent && parentInfo.parent._id) {
+          const parentId = parentInfo.parent._id.toString();
+          const language = parentInfo.parent.language || "en";
+          const pushToken = parentInfo.parent.pushToken;
+
+          if (!uniqueParents.has(parentId)) {
+            uniqueParents.set(parentId, { language, pushToken });
+          }
         }
       });
+    });
+
+    const languageGroups = new Map();
+    for (const [parentId, { language, pushToken }] of uniqueParents) {
+      if (!languageGroups.has(language)) {
+        languageGroups.set(language, []);
+      }
+      languageGroups.get(language).push({ parentId, pushToken });
     }
 
-    // Only send notification if there are recipients
-    if (parentIds.length > 0) {
-      //console.log(`Sending notification to ${parentIds.length} parents`);
-      await notificationService.sendClassroomNotification(
-        classroom,
-        `Announcement: ${title}`,
-        content,
-        "announcement"
-      );
-    } else {
-      //console.log("No parent recipients found for this classroom");
+    for (const [language, parents] of languageGroups) {
+      let notificationTitle = title;
+      let notificationContent = content;
+      let announcementPrefix = "Announcement: ";
+
+      if (language !== "en") {
+        try {
+          const textsToTranslate = [
+            { source: title },
+            { source: content },
+            { source: announcementPrefix },
+          ];
+          const translationResponse = await translateBatch(
+            textsToTranslate,
+            "en",
+            language
+          );
+
+          if (
+            translationResponse.output &&
+            translationResponse.output.length > 0
+          ) {
+            notificationTitle = translationResponse.output[0].target;
+            notificationContent = translationResponse.output[1].target;
+            announcementPrefix = translationResponse.output[2].target;
+          }
+        } catch (error) {
+          console.error(`Translation error for language ${language}:`, error);
+          continue;
+        }
+      }
+
+      const pushTokens = parents
+        .map((parent) => parent.pushToken)
+        .filter(Boolean);
+      if (pushTokens.length > 0) {
+        await notificationService.sendClassroomNotification(
+          classroom,
+          `${announcementPrefix}${notificationTitle}`,
+          notificationContent,
+          "announcement",
+          pushTokens
+        );
+      }
     }
 
     res.status(200).json({
@@ -406,7 +487,6 @@ exports.addAnnouncement = async (req, res) => {
   }
 };
 
-// Get all announcements for a classroom
 exports.getAnnouncements = async (req, res) => {
   try {
     const classroom = await Classroom.findById(req.params.id);
@@ -418,7 +498,6 @@ exports.getAnnouncements = async (req, res) => {
       });
     }
 
-    // Check if the classroom belongs to the logged-in teacher
     if (classroom.teacher.toString() !== req.user.id) {
       return res.status(403).json({
         success: false,

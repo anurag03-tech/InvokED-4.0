@@ -733,7 +733,7 @@ const ParentRemark = () => {
           </Text>
           {classroom && (
             <Text className="text-white mt-1">
-              {t("Subject")} : {classroom.subject}
+              {t("Subject")} : {t(classroom.subject)}
             </Text>
           )}
         </View>

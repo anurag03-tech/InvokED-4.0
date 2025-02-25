@@ -5,6 +5,7 @@ import { useAuth } from "./context/authContext";
 import { Button } from "~/components/ui/button";
 import i18n from "../utils/language/i18n";
 import { useVoice } from "./voiceAssistant/VoiceContext";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const LanguageSelection = () => {
   const router = useRouter();
@@ -12,12 +13,40 @@ const LanguageSelection = () => {
   const [selectedLanguage, setSelectedLanguage] = useState(null);
   const { speakText, stopAudio } = useVoice();
   const hasSpokenRef = useRef(false);
+  const languageSetRef = useRef(false);
 
   useEffect(() => {
     return () => {
       stopAudio();
     };
   }, []);
+
+  // Set language from user's saved preference
+  useEffect(() => {
+    const loadUserLanguage = async () => {
+      try {
+        if (!loading && user && user.language && !languageSetRef.current) {
+          console.log("Setting user's saved language:", user.language);
+          i18n.changeLanguage(user.language);
+          setSelectedLanguage(user.language);
+          languageSetRef.current = true;
+        } else if (!user) {
+          // If no user is logged in, check for previously stored language preference
+          const savedLanguage = await AsyncStorage.getItem("userLanguage");
+          if (savedLanguage && !languageSetRef.current) {
+            console.log("Loading saved language preference:", savedLanguage);
+            i18n.changeLanguage(savedLanguage);
+            setSelectedLanguage(savedLanguage);
+            languageSetRef.current = true;
+          }
+        }
+      } catch (error) {
+        console.error("Error loading language:", error);
+      }
+    };
+
+    loadUserLanguage();
+  }, [user, loading]);
 
   useEffect(() => {
     // Only speak if there's no user and we haven't spoken yet
@@ -64,6 +93,10 @@ const LanguageSelection = () => {
 
   const changeLanguage = (lng) => {
     i18n.changeLanguage(lng);
+    // Save the selected language to AsyncStorage
+    AsyncStorage.setItem("userLanguage", lng)
+      .then(() => console.log("Language saved to storage:", lng))
+      .catch((err) => console.error("Error saving language:", err));
   };
 
   const handleLanguageSelect = (language) => {
@@ -84,7 +117,9 @@ const LanguageSelection = () => {
           source={require("../assets/images/language-icon.png")}
           style={{ width: 55, height: 55 }}
         />
-        <Text className="text-2xl font-bold m-4">Select your language</Text>
+        <Text className="text-2xl font-bold m-4">
+          {i18n.t("Select your language")}
+        </Text>
       </View>
 
       <View className="h-[300px]">
@@ -113,7 +148,9 @@ const LanguageSelection = () => {
           onPress={handleNext}
           className="mt-4 w-[250px] bg-blue-500 active:bg-blue-400"
         >
-          <Text className="text-white font-semibold text-xl">Next</Text>
+          <Text className="text-white font-semibold text-xl">
+            {i18n.t("Next")}
+          </Text>
         </Button>
       )}
     </View>

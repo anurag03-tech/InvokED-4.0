@@ -164,7 +164,7 @@ const TabsLayout = () => {
       <Tabs.Screen name="profile" options={{ tabBarLabel: "Profile" }} />
       <Tabs.Screen
         name="notifications"
-        options={{ tabBarLabel: "Notifications" }}
+        options={{ tabBarLabel: "Notification" }}
       />
     </Tabs>
   );

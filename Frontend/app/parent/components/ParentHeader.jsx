@@ -1,6 +1,5 @@
 import React from "react";
 import { View, Image } from "react-native";
-import LanguageSelector from "./LanguageSelector";
 
 const ParentHeader = () => (
   <View
@@ -12,7 +11,6 @@ const ParentHeader = () => (
         style={{ width: 200, height: 40 }}
       />
     </View>
-    <LanguageSelector />
   </View>
 );
 export default ParentHeader;

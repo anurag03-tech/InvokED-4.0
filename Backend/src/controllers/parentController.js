@@ -3,11 +3,13 @@ const Student = require("../models/student");
 const Classroom = require("../models/classroom");
 const bcrypt = require("bcrypt");
 const mongoose = require("mongoose");
+const translateBatch = require("../utils/translateBatch");
 
 // Register parent
 exports.register = async (req, res) => {
   try {
-    const { name, email, password, phone, relation, children } = req.body;
+    const { name, email, password, phone, relation, children, language } =
+      req.body;
 
     if (
       !name ||
@@ -16,6 +18,7 @@ exports.register = async (req, res) => {
       !phone ||
       !relation ||
       !children ||
+      !language ||
       children.length === 0
     ) {
       return res.status(400).json({
@@ -70,6 +73,7 @@ exports.register = async (req, res) => {
       email,
       password: passwordHash,
       phone,
+      language,
     });
 
     // Now link all children to parent
@@ -200,6 +204,48 @@ exports.getProfile = async (req, res) => {
   }
 };
 
+exports.updateLanguage = async (req, res) => {
+  try {
+    const { language } = req.body;
+
+    if (!language) {
+      return res.status(400).json({
+        success: false,
+        message: "Language is required",
+      });
+    }
+
+    // Get parent ID from req.user instead of req.parent
+    const parentId = req.user._id;
+
+    // Update the parent document
+    const updatedParent = await Parent.findByIdAndUpdate(
+      parentId,
+      { language },
+      { new: true }
+    );
+
+    if (!updatedParent) {
+      return res.status(404).json({
+        success: false,
+        message: "Parent not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Language updated successfully",
+      user: updatedParent,
+    });
+  } catch (error) {
+    console.error("Error updating language:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Error updating language",
+    });
+  }
+};
+
 // classroom details
 
 exports.getClassroomDetails = async (req, res) => {
@@ -265,14 +311,80 @@ exports.getClassroomDetails = async (req, res) => {
       student.classrooms.map((c) => c.toString()).includes(classroomId)
     );
 
+    let announcements = classroom.announcements;
+    let assignments = classroom.assignments;
+
+    if (parent.language && parent.language !== "en") {
+      try {
+        let translatedAnnouncements = JSON.parse(
+          JSON.stringify(classroom.announcements)
+        );
+        let translatedAssignments = JSON.parse(
+          JSON.stringify(classroom.assignments)
+        );
+
+        const textsToTranslate = [];
+        const textMappings = [];
+
+        translatedAnnouncements.forEach((announcement, index) => {
+          textsToTranslate.push({ source: announcement.title });
+          textMappings.push({ type: "announcementTitle", index });
+          textsToTranslate.push({ source: announcement.content });
+          textMappings.push({ type: "announcementContent", index });
+        });
+
+        translatedAssignments.forEach((assignment, index) => {
+          textsToTranslate.push({ source: assignment.title });
+          textMappings.push({ type: "assignmentTitle", index });
+          textsToTranslate.push({ source: assignment.description });
+          textMappings.push({ type: "assignmentDescription", index });
+        });
+
+        if (textsToTranslate.length > 0) {
+          const translationResponse = await translateBatch(
+            textsToTranslate,
+            "en",
+            parent.language
+          );
+
+          if (
+            translationResponse.output &&
+            translationResponse.output.length > 0
+          ) {
+            translationResponse.output.forEach((translatedItem, index) => {
+              const mapping = textMappings[index];
+              if (mapping.type === "announcementTitle") {
+                translatedAnnouncements[mapping.index].title =
+                  translatedItem.target;
+              } else if (mapping.type === "announcementContent") {
+                translatedAnnouncements[mapping.index].content =
+                  translatedItem.target;
+              } else if (mapping.type === "assignmentTitle") {
+                translatedAssignments[mapping.index].title =
+                  translatedItem.target;
+              } else if (mapping.type === "assignmentDescription") {
+                translatedAssignments[mapping.index].description =
+                  translatedItem.target;
+              }
+            });
+          }
+        }
+
+        announcements = translatedAnnouncements;
+        assignments = translatedAssignments;
+      } catch (error) {
+        console.error("Translation error:", error);
+      }
+    }
+
     const classroomData = {
       _id: classroom._id,
       subject: classroom.subject,
       grade: classroom.grade,
       section: classroom.section,
       teacher: classroom.teacher,
-      announcements: classroom.announcements,
-      assignments: classroom.assignments,
+      announcements: announcements,
+      assignments: assignments,
       marks: filteredMarks,
       students: relevantStudents.map((student) => ({
         _id: student._id,
