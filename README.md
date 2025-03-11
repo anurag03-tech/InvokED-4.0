@@ -1,8 +1,12 @@
 ## Team Details 👥
 - **Team Name**: Code4Shiksha
-- **Problem Statement**: Theme:4 - Increasing Parental Engagement
+- **Project Title**: Parent Sync
+- **Theme 4**:  Increasing Parental Engagement
+- **PPT**: https://drive.google.com/file/d/1pVCAduBw2G88Kpa3qFZY_BmSdxTNhzSX/view?usp=sharing
+- **App Demo**: https://www.youtube.com/watch?v=Xg7MFRtlcuU
+- **Android APK File**: https://drive.google.com/file/d/1WRvjsaBRYiMzTMg4WyWZg4-MJZiQeCUX/view?usp=sharing
 
-<img src="https://github.com/user-attachments/assets/786e1152-35c8-47c6-801b-e917971dd87c" style="width: 100%; height: auto;">
+<img src="https://github.com/user-attachments/assets/ab070c46-07e5-4a26-a3e5-1573e94b7a9a" style="width: 100%; height: auto;">
 
 
 ## Tech Stack 💻
@@ -36,7 +40,6 @@
    ```env
    EXPO_PUBLIC_GOOGLE_GEMINI_API_KEY=
    EXPO_PUBLIC_MY_API_URL=
-   EXPO_PUBLIC_GOOGLE_TEXT_TO_SPEECH_API_KEY=
    ```
 
    NOTE: To get EXPO_PUBLIC_MY_API_URL:
