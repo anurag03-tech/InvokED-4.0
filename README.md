@@ -1,8 +1,13 @@
 ## Team Details 👥
 - **Team Name**: Code4Shiksha
-- **Problem Statement**: Theme:4 - Increasing Parental Engagement
+- **Project Title**: Parent Sync
+- **Theme 4**: Increasing Parental Engagement
 
-<img src="https://github.com/user-attachments/assets/786e1152-35c8-47c6-801b-e917971dd87c" style="width: 80%; height: auto;">
+- PPT: https://drive.google.com/file/d/1pVCAduBw2G88Kpa3qFZY_BmSdxTNhzSX/view?usp=sharing
+- App Demo: https://www.youtube.com/watch?v=Xg7MFRtlcuU
+- Android APK File: https://drive.google.com/file/d/1WRvjsaBRYiMzTMg4WyWZg4-MJZiQeCUX/view?usp=sharing
+
+<img src="https://github.com/user-attachments/assets/9f857cf6-40ec-44d0-a7a0-4db53938ab5c" style="width: 80%; height: auto;">
 
 
 ## Tech Stack 💻
@@ -19,7 +24,7 @@
 
 #### Features Implementation
 
-- **Notification:** Expo Notification and Firebase Cloud Messaging (FCM) --> *(open-source)*
+- **Notification:** Expo Notification --> *(open-source)* and Firebase Cloud Messaging (FCM)
 - **Multilingual App Interface:** i18next + AI4Bharat Indic Translation (NMT) --> *(open-source)*
 - **Multilingual Chatbot:** Gemini --> *(not fully open-source)*. Alternatively, we can use Google Gemma or DeepSeek
 - **Multilingual Voice Assistant:** i18next + AI4Bharat's Indic-TTS --> *(open-source)*
